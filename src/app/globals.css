@@ -29,6 +29,124 @@
   }
 }
 
+/* ---- Public site design (ported from _legacy_static_site/styles.css) ---- */
+
+.text-outline {
+  -webkit-text-stroke: 2px #09090b;
+  color: transparent;
+}
+.text-outline-accent {
+  -webkit-text-stroke: 2px #2563eb;
+  color: transparent;
+}
+
+.skill-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 9999px;
+  border: 1px solid rgba(250, 250, 250, 0.15);
+  padding: 0.5rem 1.1rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(250, 250, 250, 0.75);
+  transition: border-color 0.25s ease, color 0.25s ease, background-color 0.25s ease;
+}
+.skill-chip:hover {
+  border-color: #2563eb;
+  color: #fafafa;
+  background-color: rgba(37, 99, 235, 0.12);
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.marquee {
+  animation: marquee 28s linear infinite;
+  width: max-content;
+}
+.marquee:hover {
+  animation-play-state: paused;
+}
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.card-sheen {
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.18) 50%, transparent 60%);
+  transform: translateX(-100%);
+  transition: transform 0.7s ease;
+}
+.project-card:hover .card-sheen {
+  transform: translateX(100%);
+}
+.project-card {
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease, border-color 0.35s ease;
+}
+.project-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 60px -20px rgb(9 9 11 / 0.25);
+  border-color: rgba(9, 9, 11, 0.12);
+}
+
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  border-radius: 50%;
+  z-index: 100;
+}
+.cursor-dot {
+  width: 8px;
+  height: 8px;
+  background: #2563eb;
+  transform: translate(-50%, -50%);
+}
+.cursor-ring {
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid rgba(37, 99, 235, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.25s ease, height 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+}
+.cursor-ring.is-active {
+  width: 56px;
+  height: 56px;
+  border-color: rgba(37, 99, 235, 0.9);
+  background-color: rgba(37, 99, 235, 0.08);
+}
+
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.prose-content p { margin-bottom: 1rem; line-height: 1.75; color: #3f3f46; }
+.prose-content h2 { font-family: var(--font-archivo), sans-serif; font-weight: 800; font-size: 1.75rem; letter-spacing: -0.02em; margin: 2rem 0 1rem; }
+.prose-content h3 { font-family: var(--font-archivo), sans-serif; font-weight: 700; font-size: 1.3rem; margin: 1.75rem 0 0.75rem; }
+.prose-content a { color: #2563eb; text-decoration: underline; text-underline-offset: 3px; }
+.prose-content ul { list-style: disc; padding-left: 1.5rem; margin-bottom: 1rem; color: #3f3f46; }
+.prose-content ol { list-style: decimal; padding-left: 1.5rem; margin-bottom: 1rem; color: #3f3f46; }
+.prose-content blockquote { border-left: 3px solid #2563eb; padding-left: 1rem; margin: 1.5rem 0; color: #3f3f46; font-style: italic; }
+.prose-content img { border-radius: 1rem; margin: 1.5rem 0; }
+.prose-content code { background: rgba(9, 9, 11, 0.06); border-radius: 0.375rem; padding: 0.15rem 0.4rem; font-size: 0.85em; }
+.prose-content pre { background: #09090b; color: #fafafa; border-radius: 1rem; padding: 1.25rem; overflow-x: auto; margin: 1.5rem 0; }
+.prose-content pre code { background: none; padding: 0; }
+
 html,
 body {
   overflow-x: hidden;
@@ -43,6 +161,21 @@ button:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .marquee {
+    animation: none;
+  }
+  .project-card,
+  .project-card:hover {
+    transform: none;
+  }
   *,
   *::before,
   *::after {
