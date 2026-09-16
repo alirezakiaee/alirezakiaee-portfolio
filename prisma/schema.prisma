@@ -1,0 +1,584 @@
+// Prisma schema for the custom CMS.
+//
+// Design notes:
+// - This schema is ADDITIVE to the existing Neon database. The previous
+//   generation's tables (admin_users, content_blocks, pages, posts,
+//   auth_attempts) are renamed to legacy_* in the first migration and their
+//   data is copied into the new tables below (see prisma/migrations and
+//   prisma/seed.ts) so nothing is lost and the real admin login keeps working.
+// - Roles are a simple enum rather than a full Role/Permission table system.
+//   That satisfies "server-side authorization for every privileged action"
+//   without building a permissions-matrix UI nobody needs yet (see
+//   docs/ARCHITECTURE.md, "Deliberately not built").
+// - Revisions are capped/pruned by application code (keep latest 20), not by
+//   the schema, to avoid unbounded growth.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================
+// Auth / Users / Audit
+// ============================================================
+
+enum Role {
+  ADMIN
+  EDITOR
+  AUTHOR
+  VIEWER
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  email        String?  @unique
+  passwordHash String   @map("password_hash")
+  role         Role     @default(ADMIN)
+  totpSecret   String?  @map("totp_secret")
+  totpEnabled  Boolean  @default(false) @map("totp_enabled")
+  failedLogins Int      @default(0) @map("failed_logins")
+  lockedUntil  DateTime? @map("locked_until")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  sessions       Session[]
+  pages          Page[]
+  pageRevisions  PageRevision[]
+  posts          Post[]
+  postRevisions  PostRevision[]
+  projects       Project[]
+  projectRevisions ProjectRevision[]
+  media          Media[]
+  auditLogs      AuditLog[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model AuthAttempt {
+  id         String   @id @default(uuid())
+  identifier String
+  kind       String
+  success    Boolean  @default(false)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([identifier, kind, createdAt])
+  @@map("auth_attempts")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String // e.g. "project.publish", "media.delete"
+  resource   String // e.g. "Project"
+  resourceId String?  @map("resource_id")
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([resource, resourceId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ============================================================
+// Shared enums
+// ============================================================
+
+enum ContentStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum RedirectType {
+  PERMANENT // 301
+  TEMPORARY // 302
+}
+
+enum NavLocation {
+  HEADER
+  FOOTER
+  CUSTOM
+}
+
+// ============================================================
+// SEO (embedded, not a separate table — every content type below
+// includes these fields directly so it stays simple to query/join)
+// ============================================================
+
+// ============================================================
+// Media Library
+// ============================================================
+
+model Media {
+  id            String   @id @default(uuid())
+  filename      String // safe, generated storage filename
+  originalName  String   @map("original_name")
+  mimeType      String   @map("mime_type")
+  sizeBytes     Int      @map("size_bytes")
+  width         Int?
+  height        Int?
+  storagePath   String   @map("storage_path") // e.g. Vercel Blob URL
+  altText       String?  @map("alt_text")
+  caption       String?
+  title         String?
+  uploadedById  String?  @map("uploaded_by_id")
+  uploadedBy    User?    @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  deletedAt     DateTime? @map("deleted_at")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  pages          Page[]
+  posts          Post[]
+  projectCovers  Project[]      @relation("ProjectCover")
+  projectImages  ProjectImage[]
+  testimonials   Testimonial[]
+
+  @@index([mimeType])
+  @@index([createdAt])
+  @@map("media")
+}
+
+// ============================================================
+// Taxonomies
+// ============================================================
+
+model Technology {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  icon      String? // icon identifier or media URL
+  createdAt DateTime @default(now()) @map("created_at")
+
+  projects ProjectTechnology[]
+  services ServiceTechnology[]
+
+  @@map("technologies")
+}
+
+model Category {
+  id   String @id @default(uuid())
+  name String @unique
+  slug String @unique
+
+  posts PostCategory[]
+
+  @@map("categories")
+}
+
+model Tag {
+  id   String @id @default(uuid())
+  name String @unique
+  slug String @unique
+
+  posts PostTag[]
+
+  @@map("tags")
+}
+
+// ============================================================
+// Pages (block-based)
+// ============================================================
+
+model Page {
+  id           String        @id @default(uuid())
+  title        String
+  slug         String        @unique
+  status       ContentStatus @default(DRAFT)
+  excerpt      String?
+  template     String        @default("default")
+  parentId     String?       @map("parent_id")
+  parent       Page?         @relation("PageHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Page[]        @relation("PageHierarchy")
+  sortOrder    Int           @default(0) @map("sort_order")
+  featuredImageId String?    @map("featured_image_id")
+  featuredImage Media?       @relation(fields: [featuredImageId], references: [id], onDelete: SetNull, map: "page_featured_image_fkey")
+
+  // SEO
+  seoTitle       String?  @map("seo_title")
+  seoDescription String?  @map("seo_description")
+  canonicalUrl   String?  @map("canonical_url")
+  robotsIndex    Boolean  @default(true) @map("robots_index")
+  robotsFollow   Boolean  @default(true) @map("robots_follow")
+  ogTitle        String?  @map("og_title")
+  ogDescription  String?  @map("og_description")
+  ogImageId      String?  @map("og_image_id")
+
+  authorId     String?  @map("author_id")
+  author       User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  publishedAt  DateTime? @map("published_at")
+  scheduledAt  DateTime? @map("scheduled_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  blocks    PageBlock[]
+  revisions PageRevision[]
+
+  @@index([status])
+  @@index([slug])
+  @@map("pages")
+}
+
+// A block is structured JSON content (`data`) whose shape is validated
+// per-`type` by a Zod schema in src/lib/blocks/schemas.ts, not by Postgres.
+// This keeps the block system extensible without a migration per block type.
+model PageBlock {
+  id        String @id @default(uuid())
+  pageId    String @map("page_id")
+  page      Page   @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  type      String // "hero" | "richText" | "gallery" | "cta" | ...
+  data      Json
+  sortOrder Int    @default(0) @map("sort_order")
+  enabled   Boolean @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([pageId, sortOrder])
+  @@map("page_blocks")
+}
+
+model PageRevision {
+  id        String   @id @default(uuid())
+  pageId    String   @map("page_id")
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  snapshot  Json // full page + blocks snapshot at save time
+  authorId  String?  @map("author_id")
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([pageId, createdAt])
+  @@map("page_revisions")
+}
+
+// ============================================================
+// Blog Posts
+// ============================================================
+
+model Post {
+  id           String        @id @default(uuid())
+  title        String
+  slug         String        @unique
+  status       ContentStatus @default(DRAFT)
+  excerpt      String?
+  content      String // sanitized HTML from the rich text editor
+  featuredImageId String?    @map("featured_image_id")
+  featuredImage   Media?     @relation(fields: [featuredImageId], references: [id], onDelete: SetNull)
+
+  seoTitle       String?  @map("seo_title")
+  seoDescription String?  @map("seo_description")
+  canonicalUrl   String?  @map("canonical_url")
+  robotsIndex    Boolean  @default(true) @map("robots_index")
+  robotsFollow   Boolean  @default(true) @map("robots_follow")
+  ogTitle        String?  @map("og_title")
+  ogDescription  String?  @map("og_description")
+
+  authorId     String?  @map("author_id")
+  author       User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  publishedAt  DateTime? @map("published_at")
+  scheduledAt  DateTime? @map("scheduled_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  categories PostCategory[]
+  tags       PostTag[]
+  revisions  PostRevision[]
+
+  @@index([status, publishedAt])
+  @@index([slug])
+  @@map("posts")
+}
+
+model PostCategory {
+  postId     String   @map("post_id")
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  categoryId String   @map("category_id")
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([postId, categoryId])
+  @@map("post_categories")
+}
+
+model PostTag {
+  postId String @map("post_id")
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tagId  String @map("tag_id")
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+  @@map("post_tags")
+}
+
+model PostRevision {
+  id        String   @id @default(uuid())
+  postId    String   @map("post_id")
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  snapshot  Json
+  authorId  String?  @map("author_id")
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([postId, createdAt])
+  @@map("post_revisions")
+}
+
+// ============================================================
+// Portfolio Projects (the flagship content type)
+// ============================================================
+
+model Project {
+  id          String        @id @default(uuid())
+  title       String
+  slug        String        @unique
+  status      ContentStatus @default(DRAFT)
+
+  shortDescription String   @map("short_description")
+  // Case-study structured fields (kept as discrete columns per the spec's
+  // "Portfolio Projects" section rather than one giant HTML blob):
+  overview     String?
+  problem      String?
+  goals        String?
+  architecture String?
+  implementation String?
+  challenges   String?
+  solution     String?
+  results      String?
+
+  client       String?
+  industry     String?
+  projectType  String?  @map("project_type")
+  projectDate  DateTime? @map("project_date")
+  completionDate DateTime? @map("completion_date")
+
+  githubUrl    String?  @map("github_url")
+  liveUrl      String?  @map("live_url")
+  videoUrl     String?  @map("video_url")
+
+  metrics      Json? // free-form array of { label, value } shown as stat blocks
+
+  coverImageId String?  @map("cover_image_id")
+  coverImage   Media?   @relation("ProjectCover", fields: [coverImageId], references: [id], onDelete: SetNull)
+  gallery      ProjectImage[]
+
+  featured     Boolean  @default(false)
+  sortOrder    Int      @default(0) @map("sort_order")
+
+  seoTitle       String?  @map("seo_title")
+  seoDescription String?  @map("seo_description")
+  canonicalUrl   String?  @map("canonical_url")
+  robotsIndex    Boolean  @default(true) @map("robots_index")
+  robotsFollow   Boolean  @default(true) @map("robots_follow")
+  ogTitle        String?  @map("og_title")
+  ogDescription  String?  @map("og_description")
+
+  authorId     String?  @map("author_id")
+  author       User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  publishedAt  DateTime? @map("published_at")
+  scheduledAt  DateTime? @map("scheduled_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  deletedAt    DateTime? @map("deleted_at")
+
+  technologies ProjectTechnology[]
+  testimonials Testimonial[]
+  revisions    ProjectRevision[]
+
+  @@index([status, featured, sortOrder])
+  @@index([slug])
+  @@map("projects")
+}
+
+model ProjectImage {
+  id        String  @id @default(uuid())
+  projectId String  @map("project_id")
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  mediaId   String  @map("media_id")
+  media     Media   @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  caption   String?
+  sortOrder Int     @default(0) @map("sort_order")
+
+  @@index([projectId, sortOrder])
+  @@map("project_images")
+}
+
+model ProjectTechnology {
+  projectId    String     @map("project_id")
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  technologyId String     @map("technology_id")
+  technology   Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, technologyId])
+  @@map("project_technologies")
+}
+
+model ProjectRevision {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  snapshot  Json
+  authorId  String?  @map("author_id")
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([projectId, createdAt])
+  @@map("project_revisions")
+}
+
+// ============================================================
+// Services
+// ============================================================
+
+model Service {
+  id          String  @id @default(uuid())
+  name        String
+  slug        String  @unique
+  summary     String?
+  description String?
+  icon        String?
+  features    Json? // string[]
+  ctaLabel    String? @map("cta_label")
+  ctaUrl      String? @map("cta_url")
+  active      Boolean @default(true)
+  sortOrder   Int     @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  technologies ServiceTechnology[]
+
+  @@map("services")
+}
+
+model ServiceTechnology {
+  serviceId    String     @map("service_id")
+  service      Service    @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  technologyId String     @map("technology_id")
+  technology   Technology @relation(fields: [technologyId], references: [id], onDelete: Cascade)
+
+  @@id([serviceId, technologyId])
+  @@map("service_technologies")
+}
+
+// ============================================================
+// Testimonials
+// ============================================================
+
+model Testimonial {
+  id          String   @id @default(uuid())
+  authorName  String   @map("author_name")
+  authorTitle String?  @map("author_title")
+  authorCompany String? @map("author_company")
+  quote       String
+  avatarId    String?  @map("avatar_id")
+  avatar      Media?   @relation(fields: [avatarId], references: [id], onDelete: SetNull)
+  projectId   String?  @map("project_id")
+  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  featured    Boolean  @default(false)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("testimonials")
+}
+
+// ============================================================
+// Navigation
+// ============================================================
+
+model Navigation {
+  id       String      @id @default(uuid())
+  location NavLocation @unique
+  items    NavigationItem[]
+
+  @@map("navigations")
+}
+
+model NavigationItem {
+  id             String     @id @default(uuid())
+  navigationId   String     @map("navigation_id")
+  navigation     Navigation @relation(fields: [navigationId], references: [id], onDelete: Cascade)
+  label          String
+  url            String // internal path or external URL
+  parentId       String?    @map("parent_id")
+  parent         NavigationItem?  @relation("NavItemHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children       NavigationItem[] @relation("NavItemHierarchy")
+  sortOrder      Int        @default(0) @map("sort_order")
+  openInNewTab   Boolean    @default(false) @map("open_in_new_tab")
+  enabled        Boolean    @default(true)
+
+  @@index([navigationId, sortOrder])
+  @@map("navigation_items")
+}
+
+// ============================================================
+// Redirects
+// ============================================================
+
+model Redirect {
+  id        String       @id @default(uuid())
+  fromPath  String       @unique @map("from_path")
+  toPath    String       @map("to_path")
+  type      RedirectType @default(PERMANENT)
+  enabled   Boolean      @default(true)
+  hits      Int          @default(0)
+  createdAt DateTime     @default(now()) @map("created_at")
+
+  @@map("redirects")
+}
+
+// ============================================================
+// Global Settings (single-row-per-key store)
+// ============================================================
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("settings")
+}
+
+// ============================================================
+// Contact form submissions
+// ============================================================
+
+enum SubmissionStatus {
+  NEW
+  READ
+  REPLIED
+  ARCHIVED
+}
+
+model ContactSubmission {
+  id          String           @id @default(uuid())
+  name        String
+  email       String
+  phone       String?
+  subject     String?
+  message     String
+  status      SubmissionStatus @default(NEW)
+  ipHash      String?          @map("ip_hash")
+  createdAt   DateTime         @default(now()) @map("created_at")
+
+  @@index([status, createdAt])
+  @@map("contact_submissions")
+}
