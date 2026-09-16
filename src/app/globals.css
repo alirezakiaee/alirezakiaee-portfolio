@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .field {
+    @apply w-full rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-ink text-white text-sm font-medium px-5 py-2.5 hover:bg-accent transition-colors duration-200 cursor-pointer disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink/15 text-sm font-medium px-5 py-2.5 hover:border-accent hover:text-accent transition-colors duration-200 cursor-pointer disabled:opacity-50;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+  .badge-published {
+    @apply bg-emerald-100 text-emerald-700;
+  }
+  .badge-draft {
+    @apply bg-amber-100 text-amber-700;
+  }
+  .badge-scheduled {
+    @apply bg-blue-100 text-blue-700;
+  }
+  .badge-archived {
+    @apply bg-zinc-200 text-zinc-600;
+  }
+}
+
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
