@@ -1,4 +1,9 @@
 {
+  "rewrites": [
+    { "source": "/blog", "destination": "/blog/index.html" },
+    { "source": "/blog/:slug([a-z0-9-]+)", "destination": "/blog/post.html" },
+    { "source": "/:slug([a-z0-9-]+)", "destination": "/pages/page.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",

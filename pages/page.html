@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title id="doc-title">Alireza Kiaee</title>
+  <meta id="doc-desc" name="description" content="" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { ink: '#09090B', primary: '#18181B', muted: '#3F3F46', accent: '#2563EB', paper: '#FAFAFA' },
+        fontFamily: { display: ['Archivo','sans-serif'], body: ['"Space Grotesk"','sans-serif'] } } }
+    };
+  </script>
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.4/dist/purify.min.js"></script>
+  <style>
+    .post-content { line-height: 1.75; }
+    .post-content h2 { font-family: Archivo, sans-serif; font-weight: 800; font-size: 1.75rem; margin: 2rem 0 1rem; letter-spacing: -0.01em; }
+    .post-content h3 { font-family: Archivo, sans-serif; font-weight: 700; font-size: 1.35rem; margin: 1.75rem 0 0.75rem; }
+    .post-content p { margin: 1rem 0; color: #3F3F46; }
+    .post-content a { color: #2563EB; text-decoration: underline; text-underline-offset: 3px; }
+    .post-content ul, .post-content ol { margin: 1rem 0 1rem 1.5rem; color: #3F3F46; }
+    .post-content ul { list-style: disc; }
+    .post-content ol { list-style: decimal; }
+    .post-content img { border-radius: 1rem; margin: 1.5rem 0; max-width: 100%; }
+    .post-content blockquote { border-left: 3px solid #2563EB; padding-left: 1rem; margin: 1.5rem 0; color: #3F3F46; font-style: italic; }
+    .post-content code { background: rgba(0,0,0,.05); border-radius: .25rem; padding: .15rem .4rem; font-size: .875em; }
+  </style>
+</head>
+<body class="bg-paper text-ink font-body antialiased selection:bg-accent selection:text-white">
+  <div class="grain" aria-hidden="true"></div>
+
+  <header class="fixed top-4 left-4 right-4 z-50">
+    <nav class="mx-auto max-w-6xl flex items-center justify-between rounded-2xl border border-black/[0.06] bg-white/70 backdrop-blur-xl px-5 py-3 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+      <a href="/" class="font-display font-extrabold text-lg cursor-pointer">AK<span class="text-accent">.</span></a>
+      <ul class="hidden md:flex items-center gap-8 text-sm font-medium text-muted">
+        <li><a class="hover:text-ink transition-colors duration-200 cursor-pointer" href="/#work">Work</a></li>
+        <li><a class="hover:text-ink transition-colors duration-200 cursor-pointer" href="/#about">About</a></li>
+        <li><a class="hover:text-ink transition-colors duration-200 cursor-pointer" href="/#experience">Experience</a></li>
+        <li><a class="hover:text-ink transition-colors duration-200 cursor-pointer" href="/blog">Blog</a></li>
+        <li><a class="hover:text-ink transition-colors duration-200 cursor-pointer" href="/#contact">Contact</a></li>
+      </ul>
+      <a href="/#contact" class="hidden md:inline-flex items-center gap-2 rounded-full bg-ink text-white text-sm font-medium px-5 py-2.5 hover:bg-accent transition-colors duration-300 cursor-pointer">Let's talk</a>
+    </nav>
+  </header>
+
+  <main class="px-4 sm:px-6 lg:px-8 pt-32 pb-24 max-w-3xl mx-auto">
+    <div id="loading" class="text-muted text-sm tracking-widest uppercase">Loading…</div>
+
+    <article id="page" class="hidden">
+      <h1 id="page-title" class="font-display font-black tracking-tight text-[clamp(2rem,6vw,3.5rem)] leading-tight"></h1>
+      <div id="page-content" class="post-content mt-8"></div>
+    </article>
+
+    <div id="not-found" class="hidden text-center py-20">
+      <h1 class="font-display font-extrabold text-3xl">Page not found</h1>
+      <p class="text-muted mt-2">This page may have been unpublished or moved.</p>
+      <a href="/" class="inline-flex mt-6 items-center gap-2 rounded-full bg-ink text-white px-6 py-3 text-sm font-medium hover:bg-accent transition-colors duration-300 cursor-pointer">Back home</a>
+    </div>
+  </main>
+
+<script>
+const slug = location.pathname.split('/').filter(Boolean).pop() || '';
+
+(async () => {
+  const res = await fetch(`/api/pages/${encodeURIComponent(slug)}`);
+  document.getElementById('loading').classList.add('hidden');
+  if (!res.ok) { document.getElementById('not-found').classList.remove('hidden'); return; }
+  const { page } = await res.json();
+
+  document.title = `${page.title} — Alireza Kiaee`;
+  document.getElementById('doc-desc').setAttribute('content', page.excerpt || '');
+  document.getElementById('page-title').textContent = page.title;
+  document.getElementById('page-content').innerHTML = DOMPurify.sanitize(page.content || '');
+  document.getElementById('page').classList.remove('hidden');
+})();
+</script>
+</body>
+</html>

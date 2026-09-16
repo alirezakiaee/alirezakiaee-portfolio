@@ -20,6 +20,21 @@
     .btn-ghost { @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink/15 text-sm font-medium px-5 py-2.5 hover:border-accent hover:text-accent transition-colors duration-200 cursor-pointer disabled:opacity-50; }
     .err { @apply text-sm text-red-600 mt-2; }
     .ok { @apply text-sm text-emerald-600 mt-2; }
+    .tab-btn { @apply rounded-full px-4 py-2 text-sm font-medium cursor-pointer transition-colors duration-200 text-muted hover:text-ink; }
+    .tab-btn.active { @apply bg-ink text-white hover:text-white; }
+    .badge { @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium; }
+    .badge-published { @apply bg-emerald-100 text-emerald-700; }
+    .badge-draft { @apply bg-amber-100 text-amber-700; }
+    .rte-wrap { @apply rounded-xl border border-black/10 bg-white overflow-hidden; }
+    .rte-toolbar { @apply flex flex-wrap gap-1 border-b border-black/10 bg-black/[0.02] px-2 py-1.5; }
+    .rte-btn { @apply w-8 h-8 grid place-items-center rounded-lg text-sm font-semibold text-muted hover:bg-black/5 hover:text-ink cursor-pointer transition-colors; }
+    .rte-editor { @apply px-4 py-3 text-sm min-h-[160px] max-h-[420px] overflow-y-auto focus:outline-none; }
+    .rte-editor h2 { @apply font-display font-extrabold text-lg mt-3 mb-1.5; }
+    .rte-editor h3 { @apply font-display font-bold text-base mt-3 mb-1; }
+    .rte-editor a { @apply text-accent underline; }
+    .rte-editor ul { @apply list-disc ml-5; }
+    .rte-editor ol { @apply list-decimal ml-5; }
+    .rte-editor img { @apply rounded-lg max-w-full my-2; }
   </style>
 </head>
 <body class="bg-paper text-ink font-body min-h-screen">
@@ -115,56 +130,162 @@
           <button id="logout-btn" class="btn-ghost text-xs">Sign out</button>
         </div>
       </div>
+      <div class="mx-auto max-w-6xl px-4 sm:px-6 pb-3 flex items-center gap-2">
+        <button class="tab-btn active" data-tab="blocks">Content Blocks</button>
+        <button class="tab-btn" data-tab="pages">Pages</button>
+        <button class="tab-btn" data-tab="posts">Posts</button>
+      </div>
     </header>
 
     <main class="mx-auto max-w-6xl px-4 sm:px-6 py-10">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <h1 class="font-display font-extrabold text-3xl tracking-tight">Content blocks</h1>
-        <div class="flex items-center gap-3">
-          <select id="type-filter" class="field !w-auto">
-            <option value="">All types</option>
-          </select>
-          <button id="new-block-btn" class="btn">+ New block</button>
+
+      <!-- ============ TAB: CONTENT BLOCKS ============ -->
+      <section id="tab-blocks">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <h1 class="font-display font-extrabold text-3xl tracking-tight">Content blocks</h1>
+          <div class="flex items-center gap-3">
+            <select id="type-filter" class="field !w-auto">
+              <option value="">All types</option>
+            </select>
+            <button id="new-block-btn" class="btn">+ New block</button>
+          </div>
         </div>
-      </div>
 
-      <p class="text-sm text-muted mt-2">Edit blocks below — changes go live on the site within ~30 seconds.</p>
+        <p class="text-sm text-muted mt-2">Edit blocks below — changes go live on the site within ~30 seconds.</p>
 
-      <!-- New block form -->
-      <div id="new-block-panel" class="hidden mt-8 rounded-2xl border border-accent/30 bg-accent/[0.03] p-6">
-        <h2 class="font-display font-bold text-lg mb-4">New content block</h2>
-        <form id="create-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Type</label>
-            <input id="nb-type" class="field" list="type-list" placeholder="project" required />
-            <datalist id="type-list"></datalist>
-          </div>
-          <div>
-            <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Title</label>
-            <input id="nb-title" class="field" required />
-          </div>
-          <div class="sm:col-span-2">
-            <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Body</label>
-            <textarea id="nb-body" class="field" rows="3"></textarea>
-          </div>
-          <div class="sm:col-span-2">
-            <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Meta (JSON)</label>
-            <textarea id="nb-meta" class="field font-mono text-xs" rows="2" placeholder='{"link":"https://…","tags":["a","b"]}'></textarea>
-          </div>
-          <div>
-            <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Sort order</label>
-            <input id="nb-sort" class="field" type="number" value="0" />
-          </div>
-          <div class="flex items-end gap-3">
-            <label class="flex items-center gap-2 text-sm"><input id="nb-visible" type="checkbox" checked class="w-4 h-4 accent-accent" /> Visible</label>
-            <button class="btn" type="submit">Create</button>
-            <button class="btn-ghost" type="button" id="cancel-create">Cancel</button>
-          </div>
-          <p id="create-err" class="err hidden sm:col-span-2"></p>
-        </form>
-      </div>
+        <div id="new-block-panel" class="hidden mt-8 rounded-2xl border border-accent/30 bg-accent/[0.03] p-6">
+          <h2 class="font-display font-bold text-lg mb-4">New content block</h2>
+          <form id="create-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Type</label>
+              <input id="nb-type" class="field" list="type-list" placeholder="project" required />
+              <datalist id="type-list"></datalist>
+            </div>
+            <div>
+              <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Title</label>
+              <input id="nb-title" class="field" required />
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Body</label>
+              <textarea id="nb-body" class="field" rows="3"></textarea>
+            </div>
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Meta (JSON)</label>
+              <textarea id="nb-meta" class="field font-mono text-xs" rows="2" placeholder='{"link":"https://…","tags":["a","b"]}'></textarea>
+            </div>
+            <div>
+              <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Sort order</label>
+              <input id="nb-sort" class="field" type="number" value="0" />
+            </div>
+            <div class="flex items-end gap-3">
+              <label class="flex items-center gap-2 text-sm"><input id="nb-visible" type="checkbox" checked class="w-4 h-4 accent-accent" /> Visible</label>
+              <button class="btn" type="submit">Create</button>
+              <button class="btn-ghost" type="button" id="cancel-create">Cancel</button>
+            </div>
+            <p id="create-err" class="err hidden sm:col-span-2"></p>
+          </form>
+        </div>
 
-      <div id="blocks-list" class="mt-8 space-y-10"></div>
+        <div id="blocks-list" class="mt-8 space-y-10"></div>
+      </section>
+
+      <!-- ============ TAB: PAGES ============ -->
+      <section id="tab-pages" class="hidden">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <h1 class="font-display font-extrabold text-3xl tracking-tight">Pages</h1>
+          <button id="new-page-btn" class="btn">+ New page</button>
+        </div>
+        <p class="text-sm text-muted mt-2">Published pages are live at <code class="bg-black/5 rounded px-1.5 py-0.5">yoursite.com/&lt;slug&gt;</code>.</p>
+
+        <div id="new-page-panel" class="hidden mt-8 rounded-2xl border border-accent/30 bg-accent/[0.03] p-6">
+          <h2 class="font-display font-bold text-lg mb-4">New page</h2>
+          <form id="page-create-form" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Title</label>
+                <input id="np-title" class="field" required />
+              </div>
+              <div>
+                <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Slug</label>
+                <input id="np-slug" class="field" placeholder="auto-generated-from-title" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Excerpt</label>
+              <input id="np-excerpt" class="field" maxlength="500" />
+            </div>
+            <div>
+              <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Content</label>
+              <div class="rte-wrap"><div class="rte-toolbar" data-rte-toolbar></div><div class="rte-editor" contenteditable="true" data-rte-editor></div></div>
+            </div>
+            <div class="flex items-end gap-3">
+              <div>
+                <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Status</label>
+                <select id="np-status" class="field !w-auto"><option value="draft">Draft</option><option value="published">Published</option></select>
+              </div>
+              <button class="btn" type="submit">Create</button>
+              <button class="btn-ghost" type="button" id="cancel-create-page">Cancel</button>
+            </div>
+            <p id="page-create-err" class="err hidden"></p>
+          </form>
+        </div>
+
+        <div id="pages-list" class="mt-8 space-y-6"></div>
+      </section>
+
+      <!-- ============ TAB: POSTS ============ -->
+      <section id="tab-posts" class="hidden">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <h1 class="font-display font-extrabold text-3xl tracking-tight">Posts</h1>
+          <button id="new-post-btn" class="btn">+ New post</button>
+        </div>
+        <p class="text-sm text-muted mt-2">Published posts appear at <code class="bg-black/5 rounded px-1.5 py-0.5">yoursite.com/blog</code>.</p>
+
+        <div id="new-post-panel" class="hidden mt-8 rounded-2xl border border-accent/30 bg-accent/[0.03] p-6">
+          <h2 class="font-display font-bold text-lg mb-4">New post</h2>
+          <form id="post-create-form" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Title</label>
+                <input id="nq-title" class="field" required />
+              </div>
+              <div>
+                <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Slug</label>
+                <input id="nq-slug" class="field" placeholder="auto-generated-from-title" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Excerpt</label>
+              <input id="nq-excerpt" class="field" maxlength="500" />
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Cover image URL</label>
+                <input id="nq-cover" class="field" placeholder="https://…" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Tags (comma separated)</label>
+                <input id="nq-tags" class="field" placeholder="engineering, erp" />
+              </div>
+            </div>
+            <div>
+              <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Content</label>
+              <div class="rte-wrap"><div class="rte-toolbar" data-rte-toolbar></div><div class="rte-editor" contenteditable="true" data-rte-editor></div></div>
+            </div>
+            <div class="flex items-end gap-3">
+              <div>
+                <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Status</label>
+                <select id="nq-status" class="field !w-auto"><option value="draft">Draft</option><option value="published">Published</option></select>
+              </div>
+              <button class="btn" type="submit">Create</button>
+              <button class="btn-ghost" type="button" id="cancel-create-post">Cancel</button>
+            </div>
+            <p id="post-create-err" class="err hidden"></p>
+          </form>
+        </div>
+
+        <div id="posts-list" class="mt-8 space-y-6"></div>
+      </section>
     </main>
   </div>
 
@@ -182,6 +303,7 @@ const api = async (url, opts = {}) => {
 const show = (id) => { ['view-loading','view-setup','view-login','view-dashboard'].forEach(v => $(v).classList.toggle('hidden', v !== id)); };
 const err = (id, msg) => { const el = $(id); el.textContent = msg || ''; el.classList.toggle('hidden', !msg); };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const slugify = (s) => String(s || '').toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80);
 
 let pendingToken = null;
 
@@ -239,11 +361,66 @@ $('logout-btn').addEventListener('click', async () => {
   location.reload();
 });
 
-// ---------- dashboard ----------
-let allBlocks = [];
+// ---------- tabs ----------
+document.querySelectorAll('.tab-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('active', b === btn));
+    ['blocks', 'pages', 'posts'].forEach((t) => $(`tab-${t}`).classList.toggle('hidden', t !== btn.dataset.tab));
+  });
+});
 
+// ---------- rich text editor (delegated) ----------
+const RTE_BUTTONS = [
+  { cmd: 'bold', label: 'B', title: 'Bold' },
+  { cmd: 'italic', label: 'I', title: 'Italic' },
+  { cmd: 'formatBlock', arg: 'H2', label: 'H2', title: 'Heading 2' },
+  { cmd: 'formatBlock', arg: 'H3', label: 'H3', title: 'Heading 3' },
+  { cmd: 'formatBlock', arg: 'P', label: '¶', title: 'Paragraph' },
+  { cmd: 'insertUnorderedList', label: '•', title: 'Bullet list' },
+  { cmd: 'insertOrderedList', label: '1.', title: 'Numbered list' },
+  { cmd: 'createLink', label: '🔗', title: 'Link', prompt: 'Link URL' },
+  { cmd: 'insertImage', label: '🖼', title: 'Image', prompt: 'Image URL' },
+  { cmd: 'formatBlock', arg: 'BLOCKQUOTE', label: '❝', title: 'Quote' },
+  { cmd: 'removeFormat', label: '⨯', title: 'Clear formatting' },
+];
+
+function initRichText(scope) {
+  scope.querySelectorAll('[data-rte-toolbar]').forEach((bar) => {
+    if (bar.dataset.ready) return;
+    bar.dataset.ready = '1';
+    bar.innerHTML = RTE_BUTTONS.map((b, i) => `<button type="button" class="rte-btn" data-i="${i}" title="${esc(b.title)}">${b.label}</button>`).join('');
+  });
+}
+
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.rte-btn');
+  if (!btn) return;
+  e.preventDefault();
+  const wrap = btn.closest('.rte-wrap');
+  const editor = wrap.querySelector('[data-rte-editor]');
+  editor.focus();
+  const spec = RTE_BUTTONS[parseInt(btn.dataset.i, 10)];
+  let arg = spec.arg;
+  if (spec.prompt) {
+    arg = window.prompt(spec.prompt, 'https://');
+    if (!arg) return;
+  }
+  document.execCommand(spec.cmd, false, arg);
+});
+
+// ---------- dashboard boot ----------
 async function loadDashboard() {
   show('view-dashboard');
+  initRichText(document);
+  await Promise.all([loadBlocks(), loadPages(), loadPosts()]);
+}
+
+// =====================================================================
+// CONTENT BLOCKS (unchanged behaviour)
+// =====================================================================
+let allBlocks = [];
+
+async function loadBlocks() {
   const { status, data } = await api('/api/admin/content');
   if (status === 401) return show('view-login');
   allBlocks = data.blocks || [];
@@ -273,11 +450,11 @@ function renderBlocks() {
       <h2 class="font-display font-bold text-lg uppercase tracking-widest text-muted mb-4 flex items-center gap-3">
         ${esc(type)} <span class="text-xs bg-black/5 rounded-full px-2.5 py-0.5">${blocks.length}</span>
       </h2>
-      <div class="space-y-4">${blocks.map(cardHtml).join('')}</div>
+      <div class="space-y-4">${blocks.map(blockCardHtml).join('')}</div>
     </section>`).join('');
 }
 
-function cardHtml(b) {
+function blockCardHtml(b) {
   return `
   <div class="rounded-2xl border border-black/[0.08] bg-white p-5" data-id="${b.id}">
     <div class="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4">
@@ -347,6 +524,299 @@ $('create-form').addEventListener('submit', async (e) => {
   renderTypeFilter(); renderBlocks();
   e.target.reset(); $('nb-visible').checked = true;
   $('new-block-panel').classList.add('hidden');
+});
+
+// =====================================================================
+// PAGES
+// =====================================================================
+let allPages = [];
+
+async function loadPages() {
+  const { status, data } = await api('/api/admin/pages');
+  if (status === 401) return show('view-login');
+  allPages = data.pages || [];
+  renderPages();
+}
+
+$('new-page-btn').addEventListener('click', () => {
+  $('new-page-panel').classList.toggle('hidden');
+  initRichText(document);
+});
+$('cancel-create-page').addEventListener('click', () => $('new-page-panel').classList.add('hidden'));
+
+let npSlugTouched = false;
+$('np-slug').addEventListener('input', () => { npSlugTouched = true; });
+$('np-title').addEventListener('input', () => { if (!npSlugTouched) $('np-slug').value = slugify($('np-title').value); });
+
+function statusBadge(s) {
+  return `<span class="badge ${s === 'published' ? 'badge-published' : 'badge-draft'}">${s}</span>`;
+}
+
+function renderPages() {
+  if (allPages.length === 0) {
+    $('pages-list').innerHTML = `<p class="text-sm text-muted">No pages yet. Create one above.</p>`;
+    return;
+  }
+  $('pages-list').innerHTML = allPages.map(pageCardHtml).join('');
+  initRichText(document);
+  allPages.forEach(p => {
+    const el = document.querySelector(`[data-page-id="${p.id}"] [data-rte-editor]`);
+    if (el) el.innerHTML = p.content || '';
+  });
+}
+
+function pageCardHtml(p) {
+  return `
+  <details class="rounded-2xl border border-black/[0.08] bg-white p-5" data-page-id="${p.id}">
+    <summary class="cursor-pointer flex flex-wrap items-center gap-3 justify-between">
+      <span class="flex items-center gap-3 min-w-0">
+        <span class="font-display font-bold truncate">${esc(p.title)}</span>
+        ${statusBadge(p.status)}
+        <code class="text-xs text-muted">/${esc(p.slug)}</code>
+      </span>
+      <span class="text-xs text-muted shrink-0">${p.updated_at ? new Date(p.updated_at).toLocaleDateString() : ''}</span>
+    </summary>
+    <div class="mt-5 space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Title</label>
+          <input class="field f-title" value="${esc(p.title)}" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Slug</label>
+          <input class="field f-slug" value="${esc(p.slug)}" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Excerpt</label>
+        <input class="field f-excerpt" maxlength="500" value="${esc(p.excerpt || '')}" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Content</label>
+        <div class="rte-wrap"><div class="rte-toolbar" data-rte-toolbar></div><div class="rte-editor" contenteditable="true" data-rte-editor></div></div>
+      </div>
+      <div class="flex items-end gap-3">
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Status</label>
+          <select class="field f-status !w-auto">
+            <option value="draft" ${p.status === 'draft' ? 'selected' : ''}>Draft</option>
+            <option value="published" ${p.status === 'published' ? 'selected' : ''}>Published</option>
+          </select>
+        </div>
+        <button class="btn save-page-btn !px-4 !py-2 text-xs">Save</button>
+        <button class="btn-ghost del-page-btn !px-4 !py-2 text-xs !border-red-200 !text-red-600 hover:!border-red-500 hover:!text-red-600">Delete</button>
+        ${p.status === 'published' ? `<a href="/${esc(p.slug)}" target="_blank" class="btn-ghost !px-4 !py-2 text-xs">View live ↗</a>` : ''}
+      </div>
+      <p class="msg text-xs hidden"></p>
+    </div>
+  </details>`;
+}
+
+$('pages-list').addEventListener('click', async (e) => {
+  const card = e.target.closest('[data-page-id]');
+  if (!card) return;
+  const id = card.dataset.pageId;
+  const msg = card.querySelector('.msg');
+  const say = (t, bad) => { msg.textContent = t; msg.className = `msg text-xs ${bad ? 'text-red-600' : 'text-emerald-600'}`; msg.classList.remove('hidden'); };
+
+  if (e.target.closest('.save-page-btn')) {
+    e.preventDefault();
+    const { status, data } = await api(`/api/admin/pages/${id}`, { method: 'PUT', body: JSON.stringify({
+      title: card.querySelector('.f-title').value,
+      slug: card.querySelector('.f-slug').value,
+      excerpt: card.querySelector('.f-excerpt').value,
+      content: card.querySelector('[data-rte-editor]').innerHTML,
+      status: card.querySelector('.f-status').value,
+      meta: {},
+      sort_order: 0,
+    }) });
+    if (status !== 200) return say(data.error || 'Save failed.', true);
+    const i = allPages.findIndex(p => p.id === id);
+    if (i > -1) allPages[i] = { ...allPages[i], ...data.page };
+    say('Saved.');
+  }
+
+  if (e.target.closest('.del-page-btn')) {
+    e.preventDefault();
+    if (!confirm('Delete this page permanently?')) return;
+    const { status } = await api(`/api/admin/pages/${id}`, { method: 'DELETE' });
+    if (status !== 200) return say('Delete failed.', true);
+    allPages = allPages.filter(p => p.id !== id);
+    renderPages();
+  }
+});
+
+$('page-create-form').addEventListener('submit', async (e) => {
+  e.preventDefault(); err('page-create-err');
+  const content = $('new-page-panel').querySelector('[data-rte-editor]').innerHTML;
+  const { status, data } = await api('/api/admin/pages', { method: 'POST', body: JSON.stringify({
+    title: $('np-title').value,
+    slug: $('np-slug').value || slugify($('np-title').value),
+    excerpt: $('np-excerpt').value,
+    content,
+    status: $('np-status').value,
+    meta: {},
+    sort_order: 0,
+  }) });
+  if (status !== 201) return err('page-create-err', data.error || 'Create failed.');
+  allPages.unshift(data.page);
+  renderPages();
+  e.target.reset();
+  $('new-page-panel').querySelector('[data-rte-editor]').innerHTML = '';
+  $('new-page-panel').classList.add('hidden');
+  npSlugTouched = false;
+});
+
+// =====================================================================
+// POSTS
+// =====================================================================
+let allPosts = [];
+
+async function loadPosts() {
+  const { status, data } = await api('/api/admin/posts');
+  if (status === 401) return show('view-login');
+  allPosts = data.posts || [];
+  renderPosts();
+}
+
+$('new-post-btn').addEventListener('click', () => {
+  $('new-post-panel').classList.toggle('hidden');
+  initRichText(document);
+});
+$('cancel-create-post').addEventListener('click', () => $('new-post-panel').classList.add('hidden'));
+
+let nqSlugTouched = false;
+$('nq-slug').addEventListener('input', () => { nqSlugTouched = true; });
+$('nq-title').addEventListener('input', () => { if (!nqSlugTouched) $('nq-slug').value = slugify($('nq-title').value); });
+
+function renderPosts() {
+  if (allPosts.length === 0) {
+    $('posts-list').innerHTML = `<p class="text-sm text-muted">No posts yet. Create one above.</p>`;
+    return;
+  }
+  $('posts-list').innerHTML = allPosts.map(postCardHtml).join('');
+  initRichText(document);
+  allPosts.forEach(p => {
+    const el = document.querySelector(`[data-post-id="${p.id}"] [data-rte-editor]`);
+    if (el) el.innerHTML = p.content || '';
+  });
+}
+
+function postCardHtml(p) {
+  const date = p.published_at ? new Date(p.published_at).toLocaleDateString() : '—';
+  return `
+  <details class="rounded-2xl border border-black/[0.08] bg-white p-5" data-post-id="${p.id}">
+    <summary class="cursor-pointer flex flex-wrap items-center gap-3 justify-between">
+      <span class="flex items-center gap-3 min-w-0">
+        <span class="font-display font-bold truncate">${esc(p.title)}</span>
+        ${statusBadge(p.status)}
+        <code class="text-xs text-muted">/blog/${esc(p.slug)}</code>
+      </span>
+      <span class="text-xs text-muted shrink-0">${date}</span>
+    </summary>
+    <div class="mt-5 space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Title</label>
+          <input class="field f-title" value="${esc(p.title)}" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Slug</label>
+          <input class="field f-slug" value="${esc(p.slug)}" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Excerpt</label>
+        <input class="field f-excerpt" maxlength="500" value="${esc(p.excerpt || '')}" />
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Cover image URL</label>
+          <input class="field f-cover" value="${esc(p.cover_image || '')}" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Tags (comma separated)</label>
+          <input class="field f-tags" value="${esc((p.tags || []).join(', '))}" />
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Content</label>
+        <div class="rte-wrap"><div class="rte-toolbar" data-rte-toolbar></div><div class="rte-editor" contenteditable="true" data-rte-editor></div></div>
+      </div>
+      <div class="flex items-end gap-3">
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Status</label>
+          <select class="field f-status !w-auto">
+            <option value="draft" ${p.status === 'draft' ? 'selected' : ''}>Draft</option>
+            <option value="published" ${p.status === 'published' ? 'selected' : ''}>Published</option>
+          </select>
+        </div>
+        <button class="btn save-post-btn !px-4 !py-2 text-xs">Save</button>
+        <button class="btn-ghost del-post-btn !px-4 !py-2 text-xs !border-red-200 !text-red-600 hover:!border-red-500 hover:!text-red-600">Delete</button>
+        ${p.status === 'published' ? `<a href="/blog/${esc(p.slug)}" target="_blank" class="btn-ghost !px-4 !py-2 text-xs">View live ↗</a>` : ''}
+      </div>
+      <p class="msg text-xs hidden"></p>
+    </div>
+  </details>`;
+}
+
+$('posts-list').addEventListener('click', async (e) => {
+  const card = e.target.closest('[data-post-id]');
+  if (!card) return;
+  const id = card.dataset.postId;
+  const msg = card.querySelector('.msg');
+  const say = (t, bad) => { msg.textContent = t; msg.className = `msg text-xs ${bad ? 'text-red-600' : 'text-emerald-600'}`; msg.classList.remove('hidden'); };
+
+  if (e.target.closest('.save-post-btn')) {
+    e.preventDefault();
+    const tags = card.querySelector('.f-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+    const { status, data } = await api(`/api/admin/posts/${id}`, { method: 'PUT', body: JSON.stringify({
+      title: card.querySelector('.f-title').value,
+      slug: card.querySelector('.f-slug').value,
+      excerpt: card.querySelector('.f-excerpt').value,
+      content: card.querySelector('[data-rte-editor]').innerHTML,
+      cover_image: card.querySelector('.f-cover').value,
+      tags,
+      status: card.querySelector('.f-status').value,
+      meta: {},
+    }) });
+    if (status !== 200) return say(data.error || 'Save failed.', true);
+    const i = allPosts.findIndex(p => p.id === id);
+    if (i > -1) allPosts[i] = { ...allPosts[i], ...data.post };
+    say('Saved.');
+  }
+
+  if (e.target.closest('.del-post-btn')) {
+    e.preventDefault();
+    if (!confirm('Delete this post permanently?')) return;
+    const { status } = await api(`/api/admin/posts/${id}`, { method: 'DELETE' });
+    if (status !== 200) return say('Delete failed.', true);
+    allPosts = allPosts.filter(p => p.id !== id);
+    renderPosts();
+  }
+});
+
+$('post-create-form').addEventListener('submit', async (e) => {
+  e.preventDefault(); err('post-create-err');
+  const content = $('new-post-panel').querySelector('[data-rte-editor]').innerHTML;
+  const tags = $('nq-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+  const { status, data } = await api('/api/admin/posts', { method: 'POST', body: JSON.stringify({
+    title: $('nq-title').value,
+    slug: $('nq-slug').value || slugify($('nq-title').value),
+    excerpt: $('nq-excerpt').value,
+    content,
+    cover_image: $('nq-cover').value,
+    tags,
+    status: $('nq-status').value,
+    meta: {},
+  }) });
+  if (status !== 201) return err('post-create-err', data.error || 'Create failed.');
+  allPosts.unshift(data.post);
+  renderPosts();
+  e.target.reset();
+  $('new-post-panel').querySelector('[data-rte-editor]').innerHTML = '';
+  $('new-post-panel').classList.add('hidden');
+  nqSlugTouched = false;
 });
 </script>
 </body>
