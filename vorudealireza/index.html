@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Admin — Alireza Kiaee</title>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700;800&family=Space+Grotesk:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { ink: '#09090B', muted: '#3F3F46', accent: '#2563EB', paper: '#FAFAFA' },
+        fontFamily: { display: ['Archivo','sans-serif'], body: ['"Space Grotesk"','sans-serif'] } } }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <style>
+    .field { @apply w-full rounded-xl border border-black/10 bg-white px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent transition; }
+    .btn { @apply inline-flex items-center justify-center gap-2 rounded-full bg-ink text-white text-sm font-medium px-5 py-2.5 hover:bg-accent transition-colors duration-200 cursor-pointer disabled:opacity-50; }
+    .btn-ghost { @apply inline-flex items-center justify-center gap-2 rounded-full border border-ink/15 text-sm font-medium px-5 py-2.5 hover:border-accent hover:text-accent transition-colors duration-200 cursor-pointer disabled:opacity-50; }
+    .err { @apply text-sm text-red-600 mt-2; }
+    .ok { @apply text-sm text-emerald-600 mt-2; }
+  </style>
+</head>
+<body class="bg-paper text-ink font-body min-h-screen">
+
+  <!-- ===================== LOADING ===================== -->
+  <div id="view-loading" class="min-h-screen grid place-items-center">
+    <div class="animate-pulse text-muted text-sm tracking-widest uppercase">Loading…</div>
+  </div>
+
+  <!-- ===================== SETUP ===================== -->
+  <div id="view-setup" class="hidden min-h-screen grid place-items-center px-4 py-12">
+    <div class="w-full max-w-md">
+      <h1 class="font-display font-extrabold text-3xl tracking-tight">Admin setup</h1>
+      <p class="text-muted text-sm mt-2">One-time bootstrap — create your admin account and enroll an authenticator app.</p>
+
+      <form id="setup-form" class="mt-8 space-y-4">
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5" for="setup-key">Setup key</label>
+          <input id="setup-key" class="field" type="password" required autocomplete="off" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5" for="setup-user">Username</label>
+          <input id="setup-user" class="field" type="text" required minlength="3" maxlength="32" autocomplete="username" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5" for="setup-pass">Password (10+ chars)</label>
+          <input id="setup-pass" class="field" type="password" required minlength="10" autocomplete="new-password" />
+        </div>
+        <button class="btn w-full" type="submit">Create admin &amp; get QR code</button>
+        <p id="setup-err" class="err hidden"></p>
+      </form>
+
+      <!-- TOTP enrollment -->
+      <div id="enroll-step" class="hidden mt-10 border-t border-black/10 pt-8">
+        <h2 class="font-display font-bold text-xl">Scan with your authenticator</h2>
+        <p class="text-muted text-sm mt-1">Google Authenticator, Microsoft Authenticator, 1Password, Authy…</p>
+        <div class="mt-5 flex items-start gap-6">
+          <div id="qr" class="p-3 bg-white rounded-2xl border border-black/10 shrink-0"></div>
+          <div class="min-w-0">
+            <p class="text-xs font-medium uppercase tracking-widest text-muted">Manual entry key</p>
+            <code id="totp-secret" class="block mt-1 text-sm break-all font-mono bg-black/5 rounded-lg px-3 py-2"></code>
+          </div>
+        </div>
+        <form id="enroll-form" class="mt-6 flex gap-3">
+          <input id="enroll-code" class="field" type="text" inputmode="numeric" pattern="\d{6}" maxlength="6" placeholder="6-digit code" required autocomplete="one-time-code" />
+          <button class="btn shrink-0" type="submit">Verify &amp; finish</button>
+        </form>
+        <p id="enroll-err" class="err hidden"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== LOGIN ===================== -->
+  <div id="view-login" class="hidden min-h-screen grid place-items-center px-4">
+    <div class="w-full max-w-sm">
+      <a href="/" class="font-display font-extrabold text-lg">AK<span class="text-accent">.</span></a>
+      <h1 class="font-display font-extrabold text-3xl tracking-tight mt-6">Admin sign in</h1>
+
+      <form id="login-form" class="mt-8 space-y-4">
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5" for="login-user">Username</label>
+          <input id="login-user" class="field" type="text" required autocomplete="username" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5" for="login-pass">Password</label>
+          <input id="login-pass" class="field" type="password" required autocomplete="current-password" />
+        </div>
+        <button class="btn w-full" type="submit">Continue</button>
+        <p id="login-err" class="err hidden"></p>
+      </form>
+
+      <form id="totp-form" class="hidden mt-8 space-y-4">
+        <div>
+          <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5" for="totp-code">Authenticator code</label>
+          <input id="totp-code" class="field" type="text" inputmode="numeric" pattern="\d{6}" maxlength="6" required autocomplete="one-time-code" placeholder="000000" />
+        </div>
+        <button class="btn w-full" type="submit">Verify &amp; sign in</button>
+        <p id="totp-err" class="err hidden"></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================== DASHBOARD ===================== -->
+  <div id="view-dashboard" class="hidden min-h-screen">
+    <header class="sticky top-0 z-40 bg-paper/80 backdrop-blur-xl border-b border-black/[0.06]">
+      <div class="mx-auto max-w-6xl px-4 sm:px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <a href="/" class="font-display font-extrabold text-lg">AK<span class="text-accent">.</span></a>
+          <span class="text-sm text-muted">Content admin</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <a href="/" target="_blank" class="btn-ghost text-xs">View site</a>
+          <button id="logout-btn" class="btn-ghost text-xs">Sign out</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-6xl px-4 sm:px-6 py-10">
+      <div class="flex flex-wrap items-center justify-between gap-4">
+        <h1 class="font-display font-extrabold text-3xl tracking-tight">Content blocks</h1>
+        <div class="flex items-center gap-3">
+          <select id="type-filter" class="field !w-auto">
+            <option value="">All types</option>
+          </select>
+          <button id="new-block-btn" class="btn">+ New block</button>
+        </div>
+      </div>
+
+      <p class="text-sm text-muted mt-2">Edit blocks below — changes go live on the site within ~30 seconds.</p>
+
+      <!-- New block form -->
+      <div id="new-block-panel" class="hidden mt-8 rounded-2xl border border-accent/30 bg-accent/[0.03] p-6">
+        <h2 class="font-display font-bold text-lg mb-4">New content block</h2>
+        <form id="create-form" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Type</label>
+            <input id="nb-type" class="field" list="type-list" placeholder="project" required />
+            <datalist id="type-list"></datalist>
+          </div>
+          <div>
+            <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Title</label>
+            <input id="nb-title" class="field" required />
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Body</label>
+            <textarea id="nb-body" class="field" rows="3"></textarea>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Meta (JSON)</label>
+            <textarea id="nb-meta" class="field font-mono text-xs" rows="2" placeholder='{"link":"https://…","tags":["a","b"]}'></textarea>
+          </div>
+          <div>
+            <label class="block text-xs font-medium uppercase tracking-widest text-muted mb-1.5">Sort order</label>
+            <input id="nb-sort" class="field" type="number" value="0" />
+          </div>
+          <div class="flex items-end gap-3">
+            <label class="flex items-center gap-2 text-sm"><input id="nb-visible" type="checkbox" checked class="w-4 h-4 accent-accent" /> Visible</label>
+            <button class="btn" type="submit">Create</button>
+            <button class="btn-ghost" type="button" id="cancel-create">Cancel</button>
+          </div>
+          <p id="create-err" class="err hidden sm:col-span-2"></p>
+        </form>
+      </div>
+
+      <div id="blocks-list" class="mt-8 space-y-10"></div>
+    </main>
+  </div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const api = async (url, opts = {}) => {
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', 'x-csrf': '1', ...(opts.headers || {}) },
+    credentials: 'same-origin',
+    ...opts,
+  });
+  const data = res.status === 204 ? {} : await res.json().catch(() => ({}));
+  return { status: res.status, data };
+};
+const show = (id) => { ['view-loading','view-setup','view-login','view-dashboard'].forEach(v => $(v).classList.toggle('hidden', v !== id)); };
+const err = (id, msg) => { const el = $(id); el.textContent = msg || ''; el.classList.toggle('hidden', !msg); };
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let pendingToken = null;
+
+// ---------- boot ----------
+(async () => {
+  const { data } = await api('/api/auth/status');
+  if (data.authenticated) { await loadDashboard(); return; }
+  if (!data.initialized) show('view-setup');
+  else show('view-login');
+})();
+
+// ---------- setup ----------
+$('setup-form').addEventListener('submit', async (e) => {
+  e.preventDefault(); err('setup-err');
+  const { status, data } = await api('/api/auth/setup', { method: 'POST', body: JSON.stringify({
+    setupKey: $('setup-key').value, username: $('setup-user').value, password: $('setup-pass').value }) });
+  if (status !== 200) return err('setup-err', data.error || 'Setup failed.');
+  pendingToken = data.pendingToken;
+  $('setup-form').classList.add('hidden');
+  $('enroll-step').classList.remove('hidden');
+  $('totp-secret').textContent = data.secret;
+  new QRCode($('qr'), { text: data.otpauth, width: 140, height: 140 });
+});
+
+$('enroll-form').addEventListener('submit', async (e) => {
+  e.preventDefault(); err('enroll-err');
+  const { status, data } = await api('/api/auth/confirm-totp', { method: 'POST', body: JSON.stringify({
+    pendingToken, code: $('enroll-code').value }) });
+  if (status !== 200) return err('enroll-err', data.error || 'Invalid code.');
+  await loadDashboard();
+});
+
+// ---------- login ----------
+$('login-form').addEventListener('submit', async (e) => {
+  e.preventDefault(); err('login-err');
+  const { status, data } = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({
+    username: $('login-user').value, password: $('login-pass').value }) });
+  if (status !== 200) return err('login-err', data.error || 'Login failed.');
+  pendingToken = data.pendingToken;
+  $('login-form').classList.add('hidden');
+  $('totp-form').classList.remove('hidden');
+  $('totp-code').focus();
+});
+
+$('totp-form').addEventListener('submit', async (e) => {
+  e.preventDefault(); err('totp-err');
+  const { status, data } = await api('/api/auth/verify-totp', { method: 'POST', body: JSON.stringify({
+    pendingToken, code: $('totp-code').value }) });
+  if (status !== 200) return err('totp-err', data.error || 'Invalid code.');
+  await loadDashboard();
+});
+
+$('logout-btn').addEventListener('click', async () => {
+  await api('/api/auth/logout', { method: 'POST' });
+  location.reload();
+});
+
+// ---------- dashboard ----------
+let allBlocks = [];
+
+async function loadDashboard() {
+  show('view-dashboard');
+  const { status, data } = await api('/api/admin/content');
+  if (status === 401) return show('view-login');
+  allBlocks = data.blocks || [];
+  renderTypeFilter();
+  renderBlocks();
+}
+
+function renderTypeFilter() {
+  const types = [...new Set(allBlocks.map(b => b.type))].sort();
+  $('type-filter').innerHTML = '<option value="">All types</option>' + types.map(t => `<option>${esc(t)}</option>`).join('');
+  $('type-list').innerHTML = types.map(t => `<option value="${esc(t)}">`).join('');
+}
+
+$('type-filter').addEventListener('change', renderBlocks);
+$('new-block-btn').addEventListener('click', () => $('new-block-panel').classList.toggle('hidden'));
+$('cancel-create').addEventListener('click', () => $('new-block-panel').classList.add('hidden'));
+
+function renderBlocks() {
+  const filter = $('type-filter').value;
+  const groups = {};
+  for (const b of allBlocks) {
+    if (filter && b.type !== filter) continue;
+    (groups[b.type] ||= []).push(b);
+  }
+  $('blocks-list').innerHTML = Object.entries(groups).map(([type, blocks]) => `
+    <section>
+      <h2 class="font-display font-bold text-lg uppercase tracking-widest text-muted mb-4 flex items-center gap-3">
+        ${esc(type)} <span class="text-xs bg-black/5 rounded-full px-2.5 py-0.5">${blocks.length}</span>
+      </h2>
+      <div class="space-y-4">${blocks.map(cardHtml).join('')}</div>
+    </section>`).join('');
+}
+
+function cardHtml(b) {
+  return `
+  <div class="rounded-2xl border border-black/[0.08] bg-white p-5" data-id="${b.id}">
+    <div class="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-4">
+      <div class="space-y-3">
+        <input class="field f-title" value="${esc(b.title)}" placeholder="Title" />
+        <textarea class="field f-body" rows="2" placeholder="Body">${esc(b.body)}</textarea>
+        <textarea class="field f-meta font-mono text-xs" rows="2" placeholder='{"link":"…"}'>${esc(JSON.stringify(b.meta || {}))}</textarea>
+      </div>
+      <div class="flex md:flex-col items-center md:items-end gap-3">
+        <input class="field f-sort !w-20 text-center" type="number" value="${b.sort_order}" title="Sort order" />
+        <label class="flex items-center gap-2 text-sm whitespace-nowrap">
+          <input type="checkbox" class="f-visible w-4 h-4 accent-accent" ${b.visible ? 'checked' : ''} /> Visible
+        </label>
+        <div class="flex gap-2">
+          <button class="btn save-btn !px-4 !py-2 text-xs">Save</button>
+          <button class="btn-ghost del-btn !px-4 !py-2 text-xs !border-red-200 !text-red-600 hover:!border-red-500 hover:!text-red-600">Delete</button>
+        </div>
+      </div>
+    </div>
+    <p class="msg text-xs mt-2 hidden"></p>
+  </div>`;
+}
+
+$('blocks-list').addEventListener('click', async (e) => {
+  const card = e.target.closest('[data-id]');
+  if (!card) return;
+  const id = card.dataset.id;
+  const msg = card.querySelector('.msg');
+  const say = (t, bad) => { msg.textContent = t; msg.className = `msg text-xs mt-2 ${bad ? 'text-red-600' : 'text-emerald-600'}`; };
+
+  if (e.target.closest('.save-btn')) {
+    let meta;
+    try { meta = JSON.parse(card.querySelector('.f-meta').value || '{}'); }
+    catch { return say('Meta must be valid JSON.', true); }
+    const { status, data } = await api(`/api/admin/content/${id}`, { method: 'PUT', body: JSON.stringify({
+      title: card.querySelector('.f-title').value,
+      body: card.querySelector('.f-body').value,
+      meta,
+      sort_order: parseInt(card.querySelector('.f-sort').value, 10) || 0,
+      visible: card.querySelector('.f-visible').checked,
+    }) });
+    if (status !== 200) return say(data.error || 'Save failed.', true);
+    const i = allBlocks.findIndex(b => b.id === id);
+    if (i > -1) allBlocks[i] = data.block;
+    say('Saved.');
+  }
+
+  if (e.target.closest('.del-btn')) {
+    if (!confirm('Delete this block permanently?')) return;
+    const { status } = await api(`/api/admin/content/${id}`, { method: 'DELETE' });
+    if (status !== 200) return say('Delete failed.', true);
+    allBlocks = allBlocks.filter(b => b.id !== id);
+    renderBlocks();
+  }
+});
+
+$('create-form').addEventListener('submit', async (e) => {
+  e.preventDefault(); err('create-err');
+  let meta = {};
+  const raw = $('nb-meta').value.trim();
+  if (raw) { try { meta = JSON.parse(raw); } catch { return err('create-err', 'Meta must be valid JSON.'); } }
+  const { status, data } = await api('/api/admin/content', { method: 'POST', body: JSON.stringify({
+    type: $('nb-type').value.trim(), title: $('nb-title').value, body: $('nb-body').value,
+    meta, sort_order: parseInt($('nb-sort').value, 10) || 0, visible: $('nb-visible').checked }) });
+  if (status !== 201) return err('create-err', data.error || 'Create failed.');
+  allBlocks.push(data.block);
+  renderTypeFilter(); renderBlocks();
+  e.target.reset(); $('nb-visible').checked = true;
+  $('new-block-panel').classList.add('hidden');
+});
+</script>
+</body>
+</html>
