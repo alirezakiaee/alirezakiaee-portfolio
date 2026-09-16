@@ -8,8 +8,11 @@ import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth/session';
 import { assertCan } from '@/lib/auth/rbac';
 import { logAudit } from '@/lib/audit';
+import DOMPurify from 'isomorphic-dompurify';
 import { isPostgresUniqueViolation, isValidSlug, RESERVED_SLUGS, slugify } from '@/lib/slug';
 import { validateBlock } from '@/lib/blocks/schemas';
+
+const SANITIZE_OPTS = { ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 's', 'a', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'h1', 'h2', 'h3', 'h4', 'img', 'figure', 'figcaption', 'hr', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'span'], ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'target', 'rel', 'width', 'height'] };
 
 export type PageFormState = { error: string | null };
 
@@ -90,6 +93,10 @@ function parseBlocks(
   for (const b of arr.data) {
     const v = validateBlock(b.type, b.data);
     if (!v.ok) return { ok: false, error: `${b.type} block: ${v.error}` };
+    // richText blocks render via dangerouslySetInnerHTML — sanitize before storing.
+    if (b.type === 'richText' && typeof v.data.html === 'string') {
+      v.data.html = DOMPurify.sanitize(v.data.html, SANITIZE_OPTS);
+    }
     blocks.push({ type: b.type, data: v.data, enabled: b.enabled });
   }
   return { ok: true, blocks };
