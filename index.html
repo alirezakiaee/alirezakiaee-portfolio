@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alireza Kiaee — Software Engineer</title>
+  <meta name="description" content="Portfolio of Alireza Kiaee — software engineer crafting modern, performant digital experiences." />
+
+  <!-- Fonts: Archivo (display) + Space Grotesk (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: '#09090B',
+            primary: '#18181B',
+            muted: '#3F3F46',
+            accent: '#2563EB',
+            paper: '#FAFAFA',
+          },
+          fontFamily: {
+            display: ['Archivo', 'sans-serif'],
+            body: ['"Space Grotesk"', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body class="bg-paper text-ink font-body antialiased selection:bg-accent selection:text-white">
+
+  <!-- Scroll progress bar -->
+  <div id="scroll-progress" class="fixed top-0 left-0 h-[3px] bg-accent z-[60] w-0"></div>
+
+  <!-- Custom cursor -->
+  <div id="cursor-dot" class="cursor-dot hidden md:block"></div>
+  <div id="cursor-ring" class="cursor-ring hidden md:block"></div>
+
+  <!-- Grain overlay -->
+  <div class="grain" aria-hidden="true"></div>
+
+  <!-- ============ NAV (floating) ============ -->
+  <header class="fixed top-4 left-4 right-4 z-50">
+    <nav class="mx-auto max-w-6xl flex items-center justify-between rounded-2xl border border-black/[0.06] bg-white/70 backdrop-blur-xl px-5 py-3 shadow-[0_8px_30px_rgb(0,0,0,0.06)]">
+      <a href="#top" class="font-display font-800 tracking-tight text-lg font-extrabold cursor-pointer">
+        AK<span class="text-accent">.</span>
+      </a>
+
+      <ul class="hidden md:flex items-center gap-8 text-sm font-medium text-muted">
+        <li><a class="nav-link hover:text-ink transition-colors duration-200 cursor-pointer" href="#work">Work</a></li>
+        <li><a class="nav-link hover:text-ink transition-colors duration-200 cursor-pointer" href="#about">About</a></li>
+        <li><a class="nav-link hover:text-ink transition-colors duration-200 cursor-pointer" href="#experience">Experience</a></li>
+        <li><a class="nav-link hover:text-ink transition-colors duration-200 cursor-pointer" href="#contact">Contact</a></li>
+      </ul>
+
+      <a href="#contact" class="magnetic hidden md:inline-flex items-center gap-2 rounded-full bg-ink text-white text-sm font-medium px-5 py-2.5 hover:bg-accent transition-colors duration-300 cursor-pointer">
+        Let's talk
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
+      </a>
+
+      <!-- Mobile menu button -->
+      <button id="menu-btn" class="md:hidden p-2 cursor-pointer" aria-label="Open menu" aria-expanded="false">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+    </nav>
+
+    <!-- Mobile menu -->
+    <div id="mobile-menu" class="md:hidden hidden mx-auto max-w-6xl mt-2 rounded-2xl border border-black/[0.06] bg-white/90 backdrop-blur-xl p-4 shadow-lg">
+      <ul class="flex flex-col gap-1 text-base font-medium">
+        <li><a class="mobile-link block rounded-xl px-4 py-3 hover:bg-black/5 transition-colors cursor-pointer" href="#work">Work</a></li>
+        <li><a class="mobile-link block rounded-xl px-4 py-3 hover:bg-black/5 transition-colors cursor-pointer" href="#about">About</a></li>
+        <li><a class="mobile-link block rounded-xl px-4 py-3 hover:bg-black/5 transition-colors cursor-pointer" href="#experience">Experience</a></li>
+        <li><a class="mobile-link block rounded-xl px-4 py-3 hover:bg-black/5 transition-colors cursor-pointer" href="#contact">Contact</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main id="top">
+
+    <!-- ============ HERO ============ -->
+    <section class="relative min-h-screen flex flex-col justify-center overflow-hidden px-4 sm:px-6 lg:px-8 pt-28">
+      <!-- Decorative blobs (parallax layers) -->
+      <div class="pointer-events-none absolute -top-32 -right-32 w-[34rem] h-[34rem] rounded-full bg-accent/10 blur-3xl" data-parallax="0.15"></div>
+      <div class="pointer-events-none absolute bottom-0 -left-40 w-[28rem] h-[28rem] rounded-full bg-ink/[0.04] blur-3xl" data-parallax="0.3"></div>
+      <div class="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 w-[40rem] h-[40rem] rounded-full border border-black/[0.04]" data-parallax="0.08"></div>
+
+      <div class="mx-auto max-w-6xl w-full">
+        <p class="reveal flex items-center gap-3 text-sm font-medium tracking-widest uppercase text-muted mb-6">
+          <span class="inline-block w-8 h-px bg-accent"></span>
+          Available for new opportunities
+        </p>
+
+        <h1 class="font-display font-black leading-[0.95] tracking-tight text-[clamp(3rem,10vw,8.5rem)]">
+          <span class="reveal block">ALIREZA</span>
+          <span class="reveal block text-outline" style="transition-delay:100ms">KIAEE</span>
+        </h1>
+
+        <div class="reveal mt-8 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-8" style="transition-delay:200ms">
+          <p class="max-w-md text-lg text-muted leading-relaxed">
+            Software engineer building <span class="text-ink font-medium">fast, elegant, human-centered</span> digital products — from idea to production.
+          </p>
+
+          <div class="flex items-center gap-4">
+            <a href="#work" class="magnetic inline-flex items-center gap-2 rounded-full bg-ink text-white px-7 py-3.5 text-sm font-medium hover:bg-accent transition-colors duration-300 cursor-pointer">
+              View work
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+            </a>
+            <a href="#contact" class="magnetic inline-flex items-center gap-2 rounded-full border border-ink/15 px-7 py-3.5 text-sm font-medium hover:border-accent hover:text-accent transition-colors duration-300 cursor-pointer">
+              Contact
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Marquee -->
+      <div class="reveal mt-20 -mx-4 sm:-mx-6 lg:-mx-8 border-y border-black/[0.06] py-4 overflow-hidden" style="transition-delay:300ms">
+        <div class="marquee flex whitespace-nowrap gap-10 font-display font-semibold text-muted/70 uppercase tracking-widest text-sm">
+          <span class="flex gap-10 shrink-0">
+            <span>Full-Stack Development</span><span class="text-accent">•</span>
+            <span>System Design</span><span class="text-accent">•</span>
+            <span>Cloud Architecture</span><span class="text-accent">•</span>
+            <span>UI Engineering</span><span class="text-accent">•</span>
+            <span>Performance</span><span class="text-accent">•</span>
+            <span>API Design</span><span class="text-accent">•</span>
+          </span>
+          <span class="flex gap-10 shrink-0" aria-hidden="true">
+            <span>Full-Stack Development</span><span class="text-accent">•</span>
+            <span>System Design</span><span class="text-accent">•</span>
+            <span>Cloud Architecture</span><span class="text-accent">•</span>
+            <span>UI Engineering</span><span class="text-accent">•</span>
+            <span>Performance</span><span class="text-accent">•</span>
+            <span>API Design</span><span class="text-accent">•</span>
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ WORK ============ -->
+    <section id="work" class="px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+      <div class="mx-auto max-w-6xl">
+        <div class="reveal flex items-end justify-between mb-12">
+          <div>
+            <p class="text-sm font-medium tracking-widest uppercase text-accent mb-3">01 — Selected Work</p>
+            <h2 class="font-display font-extrabold tracking-tight text-4xl md:text-6xl">Projects</h2>
+          </div>
+          <p class="hidden md:block max-w-xs text-sm text-muted">A curated set of products and platforms I've designed and engineered.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <!-- Project card -->
+          <a href="#contact" class="project-card reveal group relative rounded-3xl overflow-hidden border border-black/[0.06] bg-white cursor-pointer block" data-tint="#2563EB">
+            <div class="aspect-[4/3] relative overflow-hidden bg-gradient-to-br from-[#2563EB] via-[#1D4ED8] to-[#0F172A]">
+              <div class="absolute inset-0 card-sheen"></div>
+              <span class="absolute top-6 left-6 font-display font-black text-white/10 text-7xl select-none">01</span>
+              <div class="absolute bottom-6 left-6 right-6 flex items-end justify-between">
+                <div class="flex gap-2">
+                  <span class="rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs font-medium text-white">Next.js</span>
+                  <span class="rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs font-medium text-white">PostgreSQL</span>
+                </div>
+                <span class="w-11 h-11 rounded-full bg-white text-ink grid place-items-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
+                </span>
+              </div>
+            </div>
+            <div class="p-6">
+              <h3 class="font-display font-bold text-2xl tracking-tight group-hover:text-accent transition-colors duration-300">Nimbus Analytics</h3>
+              <p class="mt-2 text-muted leading-relaxed">Real-time analytics platform processing millions of events daily with sub-second dashboards.</p>
+            </div>
+          </a>
+
+          <a href="#contact" class="project-card reveal group relative rounded-3xl overflow-hidden border border-black/[0.06] bg-white cursor-pointer block" style="transition-delay:80ms" data-tint="#7C3AED">
+            <div class="aspect-[4/3] relative overflow-hidden bg-gradient-to-br from-[#7C3AED] via-[#5B21B6] to-[#1E1B4B]">
+              <div class="absolute inset-0 card-sheen"></div>
+              <span class="absolute top-6 left-6 font-display font-black text-white/10 text-7xl select-none">02</span>
+              <div class="absolute bottom-6 left-6 right-6 flex items-end justify-between">
+                <div class="flex gap-2">
+                  <span class="rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs font-medium text-white">React Native</span>
+                  <span class="rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs font-medium text-white">GraphQL</span>
+                </div>
+                <span class="w-11 h-11 rounded-full bg-white text-ink grid place-items-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
+                </span>
+              </div>
+            </div>
+            <div class="p-6">
+              <h3 class="font-display font-bold text-2xl tracking-tight group-hover:text-accent transition-colors duration-300">Pulse Fitness</h3>
+              <p class="mt-2 text-muted leading-relaxed">Cross-platform fitness app with offline-first sync, serving 50k+ active athletes.</p>
+            </div>
+          </a>
+
+          <a href="#contact" class="project-card reveal group relative rounded-3xl overflow-hidden border border-black/[0.06] bg-white cursor-pointer block" data-tint="#0D9488">
+            <div class="aspect-[4/3] relative overflow-hidden bg-gradient-to-br from-[#0D9488] via-[#0F766E] to-[#042F2E]">
+              <div class="absolute inset-0 card-sheen"></div>
+              <span class="absolute top-6 left-6 font-display font-black text-white/10 text-7xl select-none">03</span>
+              <div class="absolute bottom-6 left-6 right-6 flex items-end justify-between">
+                <div class="flex gap-2">
+                  <span class="rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs font-medium text-white">Go</span>
+                  <span class="rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs font-medium text-white">Kubernetes</span>
+                </div>
+                <span class="w-11 h-11 rounded-full bg-white text-ink grid place-items-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
+                </span>
+              </div>
+            </div>
+            <div class="p-6">
+              <h3 class="font-display font-bold text-2xl tracking-tight group-hover:text-accent transition-colors duration-300">Relaymesh</h3>
+              <p class="mt-2 text-muted leading-relaxed">Distributed event-routing infrastructure handling 99.99% uptime across three regions.</p>
+            </div>
+          </a>
+
+          <a href="#contact" class="project-card reveal group relative rounded-3xl overflow-hidden border border-black/[0.06] bg-white cursor-pointer block" style="transition-delay:80ms" data-tint="#EA580C">
+            <div class="aspect-[4/3] relative overflow-hidden bg-gradient-to-br from-[#EA580C] via-[#C2410C] to-[#431407]">
+              <div class="absolute inset-0 card-sheen"></div>
+              <span class="absolute top-6 left-6 font-display font-black text-white/10 text-7xl select-none">04</span>
+              <div class="absolute bottom-6 left-6 right-6 flex items-end justify-between">
+                <div class="flex gap-2">
+                  <span class="rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs font-medium text-white">TypeScript</span>
+                  <span class="rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs font-medium text-white">Stripe</span>
+                </div>
+                <span class="w-11 h-11 rounded-full bg-white text-ink grid place-items-center opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
+                </span>
+              </div>
+            </div>
+            <div class="p-6">
+              <h3 class="font-display font-bold text-2xl tracking-tight group-hover:text-accent transition-colors duration-300">Cartwright</h3>
+              <p class="mt-2 text-muted leading-relaxed">Headless commerce engine with a checkout flow that lifted conversion by 23%.</p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ABOUT ============ -->
+    <section id="about" class="px-4 sm:px-6 lg:px-8 py-24 md:py-32 bg-ink text-paper relative overflow-hidden">
+      <div class="pointer-events-none absolute -top-40 right-0 w-[30rem] h-[30rem] rounded-full bg-accent/20 blur-3xl"></div>
+      <div class="mx-auto max-w-6xl relative">
+        <p class="reveal text-sm font-medium tracking-widest uppercase text-accent mb-3">02 — About</p>
+
+        <h2 class="reveal font-display font-extrabold tracking-tight text-3xl md:text-5xl leading-tight max-w-4xl">
+          I turn complex problems into <span class="text-accent">simple, reliable software</span> — and I care as much about the details as the architecture.
+        </h2>
+
+        <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-10">
+          <div class="reveal">
+            <h3 class="font-display font-bold text-lg mb-3 flex items-center gap-2">
+              <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 18 6-6-6-6M8 6l-6 6 6 6"/></svg>
+              Engineering
+            </h3>
+            <p class="text-paper/60 leading-relaxed text-sm">Type-safe, tested, observable systems. I write code that the next engineer thanks me for.</p>
+          </div>
+          <div class="reveal" style="transition-delay:80ms">
+            <h3 class="font-display font-bold text-lg mb-3 flex items-center gap-2">
+              <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+              Performance
+            </h3>
+            <p class="text-paper/60 leading-relaxed text-sm">Speed is a feature. I profile, measure, and optimize until the experience feels instant.</p>
+          </div>
+          <div class="reveal" style="transition-delay:160ms">
+            <h3 class="font-display font-bold text-lg mb-3 flex items-center gap-2">
+              <svg class="w-5 h-5 text-accent" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5ZM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              Product sense
+            </h3>
+            <p class="text-paper/60 leading-relaxed text-sm">I ship outcomes, not just features — always anchored to what users actually need.</p>
+          </div>
+        </div>
+
+        <!-- Skill chips -->
+        <div class="reveal mt-16 flex flex-wrap gap-3">
+          <span class="skill-chip">TypeScript</span>
+          <span class="skill-chip">React / Next.js</span>
+          <span class="skill-chip">Node.js</span>
+          <span class="skill-chip">Go</span>
+          <span class="skill-chip">Python</span>
+          <span class="skill-chip">PostgreSQL</span>
+          <span class="skill-chip">GraphQL</span>
+          <span class="skill-chip">AWS</span>
+          <span class="skill-chip">Docker / K8s</span>
+          <span class="skill-chip">Tailwind CSS</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ EXPERIENCE ============ -->
+    <section id="experience" class="px-4 sm:px-6 lg:px-8 py-24 md:py-32">
+      <div class="mx-auto max-w-6xl">
+        <p class="reveal text-sm font-medium tracking-widest uppercase text-accent mb-3">03 — Experience</p>
+        <h2 class="reveal font-display font-extrabold tracking-tight text-4xl md:text-6xl mb-14">Where I've been</h2>
+
+        <ol class="relative border-l-2 border-black/10 ml-2 space-y-12">
+          <li class="reveal relative pl-8">
+            <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-accent ring-4 ring-paper"></span>
+            <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
+              <h3 class="font-display font-bold text-xl">Senior Software Engineer</h3>
+              <span class="text-sm font-medium text-accent">2023 — Present</span>
+            </div>
+            <p class="text-muted font-medium mt-1">TechCorp · Remote</p>
+            <p class="text-muted mt-3 max-w-2xl leading-relaxed">Leading a team of five on the core platform — redesigned the event pipeline, cutting p99 latency by 60% and infra costs by 35%.</p>
+          </li>
+          <li class="reveal relative pl-8" style="transition-delay:80ms">
+            <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-ink/20 ring-4 ring-paper"></span>
+            <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
+              <h3 class="font-display font-bold text-xl">Software Engineer</h3>
+              <span class="text-sm font-medium text-muted">2021 — 2023</span>
+            </div>
+            <p class="text-muted font-medium mt-1">StartupXYZ · San Francisco</p>
+            <p class="text-muted mt-3 max-w-2xl leading-relaxed">First engineering hire. Built the product from zero to 40k users, owning everything from the React front end to the Go services behind it.</p>
+          </li>
+          <li class="reveal relative pl-8" style="transition-delay:160ms">
+            <span class="absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-ink/20 ring-4 ring-paper"></span>
+            <div class="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-1">
+              <h3 class="font-display font-bold text-xl">Junior Developer</h3>
+              <span class="text-sm font-medium text-muted">2019 — 2021</span>
+            </div>
+            <p class="text-muted font-medium mt-1">Digital Agency · Toronto</p>
+            <p class="text-muted mt-3 max-w-2xl leading-relaxed">Shipped 15+ client sites and internal tools; introduced automated testing that cut release regressions in half.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============ CONTACT ============ -->
+    <section id="contact" class="px-4 sm:px-6 lg:px-8 py-24 md:py-40 relative overflow-hidden">
+      <div class="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-accent/[0.06] to-transparent"></div>
+      <div class="mx-auto max-w-6xl text-center relative">
+        <p class="reveal text-sm font-medium tracking-widest uppercase text-accent mb-6">04 — Contact</p>
+        <h2 class="reveal font-display font-black tracking-tight text-[clamp(2.5rem,8vw,6rem)] leading-none">
+          Let's build something<br /><span class="text-outline-accent">great together</span>
+        </h2>
+        <p class="reveal mt-8 max-w-xl mx-auto text-muted text-lg leading-relaxed" style="transition-delay:100ms">
+          Have a project in mind, or just want to say hi? My inbox is always open.
+        </p>
+        <div class="reveal mt-10 flex flex-col sm:flex-row items-center justify-center gap-4" style="transition-delay:200ms">
+          <a href="mailto:hello@alirezakiaee.com" class="magnetic inline-flex items-center gap-2 rounded-full bg-ink text-white px-8 py-4 text-sm font-medium hover:bg-accent transition-colors duration-300 cursor-pointer">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>
+            hello@alirezakiaee.com
+          </a>
+          <div class="flex items-center gap-3">
+            <a href="https://github.com/alirezakiaee" target="_blank" rel="noopener" aria-label="GitHub" class="magnetic w-12 h-12 rounded-full border border-ink/15 grid place-items-center hover:border-accent hover:text-accent transition-colors duration-300 cursor-pointer">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.55 0-.27-.01-1.17-.02-2.12-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.19 1.76 1.19 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 5.78 0c2.21-1.49 3.18-1.18 3.18-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.05.78 2.12 0 1.53-.01 2.76-.01 3.14 0 .3.2.66.8.55A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>
+            </a>
+            <a href="https://linkedin.com/in/alirezakiaee" target="_blank" rel="noopener" aria-label="LinkedIn" class="magnetic w-12 h-12 rounded-full border border-ink/15 grid place-items-center hover:border-accent hover:text-accent transition-colors duration-300 cursor-pointer">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.86 0-2.14 1.45-2.14 2.94v5.67H9.36V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12ZM7.12 20.45H3.56V9h3.56v11.45Z"/></svg>
+            </a>
+            <a href="https://x.com/alirezakiaee" target="_blank" rel="noopener" aria-label="X (Twitter)" class="magnetic w-12 h-12 rounded-full border border-ink/15 grid place-items-center hover:border-accent hover:text-accent transition-colors duration-300 cursor-pointer">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.41l-5.8-7.58-6.64 7.58H.47l8.6-9.83L0 1.15h7.59l5.24 6.93 6.07-6.93Zm-1.29 19.5h2.04L6.49 3.24H4.3l13.31 17.41Z"/></svg>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="border-t border-black/[0.06] px-4 sm:px-6 lg:px-8 py-8">
+    <div class="mx-auto max-w-6xl flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted">
+      <p>© 2026 Alireza Kiaee. Crafted with care.</p>
+      <a href="#top" class="inline-flex items-center gap-2 hover:text-accent transition-colors duration-200 cursor-pointer">
+        Back to top
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+      </a>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+</body>
+</html>
