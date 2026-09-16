@@ -2,7 +2,12 @@ import { z } from 'zod';
 
 // Per-type validation for PageBlock.data. Shared between the admin editor
 // (client) and the save action (server) — no 'server-only' here.
-export const BLOCK_TYPES = ['hero', 'richText', 'cta', 'gallery', 'spacer'] as const;
+export const BLOCK_TYPES = [
+  'hero', 'richText', 'cta', 'gallery', 'spacer',
+  // Home sections migrated from the legacy content_blocks model.
+  'homeHero', 'about', 'marquee', 'pillars', 'skills', 'experience',
+  'projectList', 'sideProjects', 'contactSection',
+] as const;
 export type BlockType = (typeof BLOCK_TYPES)[number];
 
 export const BLOCK_LABELS: Record<BlockType, string> = {
@@ -11,6 +16,15 @@ export const BLOCK_LABELS: Record<BlockType, string> = {
   cta: 'Call to action',
   gallery: 'Gallery',
   spacer: 'Spacer',
+  homeHero: 'Home hero',
+  about: 'About statement',
+  marquee: 'Marquee strip',
+  pillars: 'Pillars',
+  skills: 'Skills list',
+  experience: 'Experience timeline',
+  projectList: 'Featured projects',
+  sideProjects: 'Side projects',
+  contactSection: 'Contact section',
 };
 
 const url = z.string().trim().max(2048).refine((v) => !v || /^https?:\/\//i.test(v) || v.startsWith('/'), {
@@ -42,6 +56,63 @@ export const BLOCK_SCHEMAS: Record<BlockType, z.ZodTypeAny> = {
   spacer: z.object({
     size: z.enum(['sm', 'md', 'lg']).default('md'),
   }),
+
+  // ---- Home sections (structured content migrated from legacy blocks) ----
+  homeHero: z.object({
+    eyebrow: z.string().trim().max(300).optional(),
+    line1: z.string().trim().min(1, 'First name line is required').max(80),
+    line2: z.string().trim().min(1, 'Second name line is required').max(80),
+    tagline: z.string().trim().max(500).optional(),
+    accent: z.string().trim().max(200).optional(),
+  }),
+  about: z.object({
+    body: z.string().trim().min(1, 'About text is required').max(2000),
+    accent: z.string().trim().max(200).optional(),
+  }),
+  marquee: z.object({
+    items: z.array(z.string().trim().min(1).max(80)).min(1, 'Add at least one item').max(30),
+  }),
+  pillars: z.object({
+    items: z.array(z.object({
+      title: z.string().trim().min(1).max(120),
+      body: z.string().trim().max(1000).optional(),
+      icon: z.string().trim().max(60).optional(),
+    })).min(1).max(12),
+  }),
+  skills: z.object({
+    items: z.array(z.string().trim().min(1).max(80)).min(1, 'Add at least one skill').max(60),
+  }),
+  experience: z.object({
+    items: z.array(z.object({
+      title: z.string().trim().min(1).max(160),
+      body: z.string().trim().max(2000).optional(),
+      period: z.string().trim().max(80).optional(),
+      company: z.string().trim().max(120).optional(),
+      location: z.string().trim().max(120).optional(),
+      current: z.boolean().default(false),
+    })).min(1).max(20),
+  }),
+  projectList: z.object({
+    heading: z.string().trim().max(120).optional(),
+    maxItems: z.coerce.number().int().min(1).max(12).default(4),
+  }),
+  sideProjects: z.object({
+    items: z.array(z.object({
+      title: z.string().trim().min(1).max(120),
+      link: url,
+    })).min(1).max(20),
+  }),
+  contactSection: z.object({
+    heading: z.string().trim().max(120).optional(),
+    ctaText: z.string().trim().max(200).optional(),
+    ctaAccent: z.string().trim().max(120).optional(),
+    items: z.array(z.object({
+      label: z.string().trim().min(1).max(80),
+      value: z.string().trim().max(200).optional(),
+      link: url.optional(),
+      visible: z.boolean().default(true),
+    })).max(20).default([]),
+  }),
 };
 
 export function defaultBlockData(type: BlockType): Record<string, unknown> {
@@ -56,6 +127,24 @@ export function defaultBlockData(type: BlockType): Record<string, unknown> {
       return { mediaIds: [], captions: [] };
     case 'spacer':
       return { size: 'md' };
+    case 'homeHero':
+      return { eyebrow: '', line1: '', line2: '', tagline: '', accent: '' };
+    case 'about':
+      return { body: '', accent: '' };
+    case 'marquee':
+      return { items: [] };
+    case 'pillars':
+      return { items: [] };
+    case 'skills':
+      return { items: [] };
+    case 'experience':
+      return { items: [] };
+    case 'projectList':
+      return { heading: 'Selected work', maxItems: 4 };
+    case 'sideProjects':
+      return { items: [] };
+    case 'contactSection':
+      return { heading: '', ctaText: '', ctaAccent: '', items: [] };
   }
 }
 

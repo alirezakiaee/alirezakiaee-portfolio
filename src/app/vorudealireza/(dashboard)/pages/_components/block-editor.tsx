@@ -115,6 +115,107 @@ function BlockFields({ block, patch }: { block: EditorBlock; patch: (p: Record<s
           </select>
         </Field>
       );
+    case 'homeHero':
+      return (
+        <div className="space-y-3">
+          <Field label="Eyebrow">
+            <TextInput value={str('eyebrow')} onChange={(v) => patch({ eyebrow: v })} placeholder="Toronto, Canada · Full-Stack" />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Name line 1">
+              <TextInput value={str('line1')} onChange={(v) => patch({ line1: v })} />
+            </Field>
+            <Field label="Name line 2">
+              <TextInput value={str('line2')} onChange={(v) => patch({ line2: v })} />
+            </Field>
+          </div>
+          <Field label="Tagline">
+            <textarea className={inputCls} rows={2} value={str('tagline')} onChange={(e) => patch({ tagline: e.target.value })} />
+          </Field>
+          <Field label="Accent words (highlighted in the tagline)">
+            <TextInput value={str('accent')} onChange={(v) => patch({ accent: v })} />
+          </Field>
+        </div>
+      );
+    case 'about':
+      return (
+        <div className="space-y-3">
+          <Field label="Statement">
+            <textarea className={inputCls} rows={3} value={str('body')} onChange={(e) => patch({ body: e.target.value })} />
+          </Field>
+          <Field label="Accent words">
+            <TextInput value={str('accent')} onChange={(v) => patch({ accent: v })} />
+          </Field>
+        </div>
+      );
+    case 'marquee':
+    case 'skills':
+      return (
+        <Field label="Items (one per line)">
+          <textarea
+            className={`${inputCls} font-mono text-xs`}
+            rows={6}
+            value={Array.isArray(d.items) ? (d.items as string[]).join('\n') : ''}
+            onChange={(e) => patch({ items: e.target.value.split('\n').map((s) => s.trim()).filter(Boolean) })}
+          />
+        </Field>
+      );
+    case 'pillars':
+    case 'experience':
+    case 'sideProjects':
+    case 'contactSection': {
+      const key = block.type === 'contactSection' ? 'items' : 'items';
+      return (
+        <div className="space-y-3">
+          {block.type === 'contactSection' && (
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="Heading">
+                <TextInput value={str('heading')} onChange={(v) => patch({ heading: v })} />
+              </Field>
+              <Field label="CTA text">
+                <TextInput value={str('ctaText')} onChange={(v) => patch({ ctaText: v })} />
+              </Field>
+              <Field label="CTA accent">
+                <TextInput value={str('ctaAccent')} onChange={(v) => patch({ ctaAccent: v })} />
+              </Field>
+            </div>
+          )}
+          <Field label="Items (JSON array — edit carefully)">
+            <textarea
+              className={`${inputCls} font-mono text-xs`}
+              rows={10}
+              defaultValue={JSON.stringify(d[key] ?? [], null, 2)}
+              onBlur={(e) => {
+                try {
+                  patch({ [key]: JSON.parse(e.target.value || '[]') });
+                  e.target.classList.remove('!border-red-400');
+                } catch {
+                  e.target.classList.add('!border-red-400');
+                }
+              }}
+            />
+          </Field>
+        </div>
+      );
+    }
+    case 'projectList':
+      return (
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Heading">
+            <TextInput value={str('heading')} onChange={(v) => patch({ heading: v })} placeholder="Selected work" />
+          </Field>
+          <Field label="Max items">
+            <input
+              type="number"
+              className={inputCls}
+              value={Number(d.maxItems ?? 4)}
+              min={1}
+              max={12}
+              onChange={(e) => patch({ maxItems: Number(e.target.value) })}
+            />
+          </Field>
+        </div>
+      );
   }
 }
 

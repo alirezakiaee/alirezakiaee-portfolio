@@ -375,6 +375,7 @@ model Project {
   videoUrl     String?  @map("video_url")
 
   metrics      Json? // free-form array of { label, value } shown as stat blocks
+  cardStyle    Json? @map("card_style") // visual card hints, e.g. { "gradient": ["#…","#…","#…"] }
 
   coverImageId String?  @map("cover_image_id")
   coverImage   Media?   @relation("ProjectCover", fields: [coverImageId], references: [id], onDelete: SetNull)
