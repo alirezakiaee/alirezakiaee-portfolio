@@ -67,7 +67,7 @@
 const slug = location.pathname.split('/').filter(Boolean).pop() || '';
 
 (async () => {
-  const res = await fetch(`/api/pages/${encodeURIComponent(slug)}`);
+  const res = await fetch(`/api/pages?slug=${encodeURIComponent(slug)}`);
   document.getElementById('loading').classList.add('hidden');
   if (!res.ok) { document.getElementById('not-found').classList.remove('hidden'); return; }
   const { page } = await res.json();

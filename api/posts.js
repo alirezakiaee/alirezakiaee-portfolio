@@ -1,8 +1,22 @@
 import { sql } from './_lib/db.js';
+import { isValidSlug } from './_lib/slug.js';
 
-// Public: paginated list of published posts, newest first. Optional ?tag= filter.
+// Public: a single published post via ?slug=, otherwise a paginated list
+// (newest first, optional ?tag= filter).
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end();
+
+  res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=300');
+
+  const { slug } = req.query;
+  if (slug) {
+    if (!isValidSlug(slug)) return res.status(404).json({ error: 'Not found.' });
+    const rows = await sql`
+      SELECT slug, title, excerpt, content, cover_image, tags, published_at, meta
+      FROM posts WHERE slug = ${slug} AND status = 'published' LIMIT 1`;
+    if (rows.length === 0) return res.status(404).json({ error: 'Not found.' });
+    return res.status(200).json({ post: rows[0] });
+  }
 
   const page = Math.max(1, parseInt(req.query.page, 10) || 1);
   const limit = Math.min(24, Math.max(1, parseInt(req.query.limit, 10) || 9));
@@ -25,7 +39,6 @@ export default async function handler(req, res) {
     ? await sql`SELECT count(*)::int AS n FROM posts WHERE status = 'published' AND ${tag} = ANY(tags)`
     : await sql`SELECT count(*)::int AS n FROM posts WHERE status = 'published'`;
 
-  res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=300');
   return res.status(200).json({
     posts: rows,
     page,

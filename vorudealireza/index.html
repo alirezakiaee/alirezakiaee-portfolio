@@ -309,7 +309,7 @@ let pendingToken = null;
 
 // ---------- boot ----------
 (async () => {
-  const { data } = await api('/api/auth/status');
+  const { data } = await api('/api/auth');
   if (data.authenticated) { await loadDashboard(); return; }
   if (!data.initialized) show('view-setup');
   else show('view-login');
@@ -318,8 +318,8 @@ let pendingToken = null;
 // ---------- setup ----------
 $('setup-form').addEventListener('submit', async (e) => {
   e.preventDefault(); err('setup-err');
-  const { status, data } = await api('/api/auth/setup', { method: 'POST', body: JSON.stringify({
-    setupKey: $('setup-key').value, username: $('setup-user').value, password: $('setup-pass').value }) });
+  const { status, data } = await api('/api/auth', { method: 'POST', body: JSON.stringify({
+    action: 'setup', setupKey: $('setup-key').value, username: $('setup-user').value, password: $('setup-pass').value }) });
   if (status !== 200) return err('setup-err', data.error || 'Setup failed.');
   pendingToken = data.pendingToken;
   $('setup-form').classList.add('hidden');
@@ -330,8 +330,8 @@ $('setup-form').addEventListener('submit', async (e) => {
 
 $('enroll-form').addEventListener('submit', async (e) => {
   e.preventDefault(); err('enroll-err');
-  const { status, data } = await api('/api/auth/confirm-totp', { method: 'POST', body: JSON.stringify({
-    pendingToken, code: $('enroll-code').value }) });
+  const { status, data } = await api('/api/auth', { method: 'POST', body: JSON.stringify({
+    action: 'confirm-totp', pendingToken, code: $('enroll-code').value }) });
   if (status !== 200) return err('enroll-err', data.error || 'Invalid code.');
   await loadDashboard();
 });
@@ -339,8 +339,8 @@ $('enroll-form').addEventListener('submit', async (e) => {
 // ---------- login ----------
 $('login-form').addEventListener('submit', async (e) => {
   e.preventDefault(); err('login-err');
-  const { status, data } = await api('/api/auth/login', { method: 'POST', body: JSON.stringify({
-    username: $('login-user').value, password: $('login-pass').value }) });
+  const { status, data } = await api('/api/auth', { method: 'POST', body: JSON.stringify({
+    action: 'login', username: $('login-user').value, password: $('login-pass').value }) });
   if (status !== 200) return err('login-err', data.error || 'Login failed.');
   pendingToken = data.pendingToken;
   $('login-form').classList.add('hidden');
@@ -350,14 +350,14 @@ $('login-form').addEventListener('submit', async (e) => {
 
 $('totp-form').addEventListener('submit', async (e) => {
   e.preventDefault(); err('totp-err');
-  const { status, data } = await api('/api/auth/verify-totp', { method: 'POST', body: JSON.stringify({
-    pendingToken, code: $('totp-code').value }) });
+  const { status, data } = await api('/api/auth', { method: 'POST', body: JSON.stringify({
+    action: 'verify-totp', pendingToken, code: $('totp-code').value }) });
   if (status !== 200) return err('totp-err', data.error || 'Invalid code.');
   await loadDashboard();
 });
 
 $('logout-btn').addEventListener('click', async () => {
-  await api('/api/auth/logout', { method: 'POST' });
+  await api('/api/auth', { method: 'POST', body: JSON.stringify({ action: 'logout' }) });
   location.reload();
 });
 
@@ -489,7 +489,7 @@ $('blocks-list').addEventListener('click', async (e) => {
     let meta;
     try { meta = JSON.parse(card.querySelector('.f-meta').value || '{}'); }
     catch { return say('Meta must be valid JSON.', true); }
-    const { status, data } = await api(`/api/admin/content/${id}`, { method: 'PUT', body: JSON.stringify({
+    const { status, data } = await api(`/api/admin/content?id=${id}`, { method: 'PUT', body: JSON.stringify({
       title: card.querySelector('.f-title').value,
       body: card.querySelector('.f-body').value,
       meta,
@@ -504,7 +504,7 @@ $('blocks-list').addEventListener('click', async (e) => {
 
   if (e.target.closest('.del-btn')) {
     if (!confirm('Delete this block permanently?')) return;
-    const { status } = await api(`/api/admin/content/${id}`, { method: 'DELETE' });
+    const { status } = await api(`/api/admin/content?id=${id}`, { method: 'DELETE' });
     if (status !== 200) return say('Delete failed.', true);
     allBlocks = allBlocks.filter(b => b.id !== id);
     renderBlocks();
@@ -621,7 +621,7 @@ $('pages-list').addEventListener('click', async (e) => {
 
   if (e.target.closest('.save-page-btn')) {
     e.preventDefault();
-    const { status, data } = await api(`/api/admin/pages/${id}`, { method: 'PUT', body: JSON.stringify({
+    const { status, data } = await api(`/api/admin/pages?id=${id}`, { method: 'PUT', body: JSON.stringify({
       title: card.querySelector('.f-title').value,
       slug: card.querySelector('.f-slug').value,
       excerpt: card.querySelector('.f-excerpt').value,
@@ -639,7 +639,7 @@ $('pages-list').addEventListener('click', async (e) => {
   if (e.target.closest('.del-page-btn')) {
     e.preventDefault();
     if (!confirm('Delete this page permanently?')) return;
-    const { status } = await api(`/api/admin/pages/${id}`, { method: 'DELETE' });
+    const { status } = await api(`/api/admin/pages?id=${id}`, { method: 'DELETE' });
     if (status !== 200) return say('Delete failed.', true);
     allPages = allPages.filter(p => p.id !== id);
     renderPages();
@@ -770,7 +770,7 @@ $('posts-list').addEventListener('click', async (e) => {
   if (e.target.closest('.save-post-btn')) {
     e.preventDefault();
     const tags = card.querySelector('.f-tags').value.split(',').map(t => t.trim()).filter(Boolean);
-    const { status, data } = await api(`/api/admin/posts/${id}`, { method: 'PUT', body: JSON.stringify({
+    const { status, data } = await api(`/api/admin/posts?id=${id}`, { method: 'PUT', body: JSON.stringify({
       title: card.querySelector('.f-title').value,
       slug: card.querySelector('.f-slug').value,
       excerpt: card.querySelector('.f-excerpt').value,
@@ -789,7 +789,7 @@ $('posts-list').addEventListener('click', async (e) => {
   if (e.target.closest('.del-post-btn')) {
     e.preventDefault();
     if (!confirm('Delete this post permanently?')) return;
-    const { status } = await api(`/api/admin/posts/${id}`, { method: 'DELETE' });
+    const { status } = await api(`/api/admin/posts?id=${id}`, { method: 'DELETE' });
     if (status !== 200) return say('Delete failed.', true);
     allPosts = allPosts.filter(p => p.id !== id);
     renderPosts();
