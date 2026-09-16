@@ -4,6 +4,9 @@ node_modules/
 # Next.js build output
 .next/
 
+# Local dev media uploads (prod uses Vercel Blob)
+public/uploads/
+
 # Python cache
 __pycache__/
 *.pyc
