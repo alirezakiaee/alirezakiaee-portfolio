@@ -256,7 +256,12 @@ export async function deleteProject(_prev: ProjectFormState, formData: FormData)
   const project = await prisma.project.findFirst({ where: { id, deletedAt: null } });
   if (!project) return { error: 'Project not found.' };
 
-  await prisma.project.update({ where: { id }, data: { deletedAt: new Date() } });
+  // Tombstone the slug so it can be reused — the unique constraint would
+  // otherwise keep the slug locked by a project no one can see.
+  await prisma.project.update({
+    where: { id },
+    data: { deletedAt: new Date(), slug: `${project.slug}--deleted-${Date.now().toString(36)}` },
+  });
   await logAudit({
     userId: user.id,
     action: 'project.delete',

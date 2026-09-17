@@ -34,22 +34,22 @@ export const getNavItems = cache(async (location: NavLocation) => {
 });
 
 export const getHomePage = cache(async () =>
-  prisma.page.findUnique({
-    where: { slug: 'home' },
+  prisma.page.findFirst({
+    where: { slug: 'home', deletedAt: null },
     include: { blocks: { where: { enabled: true }, orderBy: { sortOrder: 'asc' } } },
   })
 );
 
 export const getPageBySlug = cache(async (slug: string) =>
   prisma.page.findFirst({
-    where: { slug, status: 'PUBLISHED' },
+    where: { slug, status: 'PUBLISHED', deletedAt: null },
     include: { blocks: { where: { enabled: true }, orderBy: { sortOrder: 'asc' } } },
   })
 );
 
 export const getPublishedPosts = cache(async () =>
   prisma.post.findMany({
-    where: { status: 'PUBLISHED' },
+    where: { status: 'PUBLISHED', deletedAt: null },
     orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
     include: {
       featuredImage: { select: { storagePath: true, altText: true } },
@@ -61,7 +61,7 @@ export const getPublishedPosts = cache(async () =>
 
 export const getPostBySlug = cache(async (slug: string) =>
   prisma.post.findFirst({
-    where: { slug, status: 'PUBLISHED' },
+    where: { slug, status: 'PUBLISHED', deletedAt: null },
     include: {
       featuredImage: true,
       categories: { include: { category: true } },
@@ -72,7 +72,7 @@ export const getPostBySlug = cache(async (slug: string) =>
 
 export const getFeaturedProjects = cache(async (limit = 4) =>
   prisma.project.findMany({
-    where: { status: 'PUBLISHED', featured: true },
+    where: { status: 'PUBLISHED', featured: true, deletedAt: null },
     orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
     take: limit,
     include: { technologies: { include: { technology: { select: { name: true } } } } },
@@ -81,7 +81,7 @@ export const getFeaturedProjects = cache(async (limit = 4) =>
 
 export const getProjectBySlug = cache(async (slug: string) =>
   prisma.project.findFirst({
-    where: { slug, status: 'PUBLISHED' },
+    where: { slug, status: 'PUBLISHED', deletedAt: null },
     include: {
       technologies: { include: { technology: { select: { name: true } } } },
       gallery: { include: { media: true }, orderBy: { sortOrder: 'asc' } },

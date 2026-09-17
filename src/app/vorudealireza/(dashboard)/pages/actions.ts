@@ -228,9 +228,25 @@ export async function deletePage(_prev: PageFormState, formData: FormData): Prom
   const page = await prisma.page.findFirst({ where: { id, deletedAt: null } });
   if (!page) return { error: 'Page not found.' };
 
-  await prisma.page.update({ where: { id }, data: { deletedAt: new Date() } });
+  // Tombstone the slug so it can be reused — the unique constraint would
+  // otherwise keep the slug locked by a page no one can see.
+  await prisma.page.update({
+    where: { id },
+    data: { deletedAt: new Date(), slug: `${page.slug}--deleted-${Date.now().toString(36)}` },
+  });
   // Detach children so they become top-level pages rather than orphans.
   await prisma.page.updateMany({ where: { parentId: id }, data: { parentId: null } });
+  // Remove nav items (and their children) that link to this page's URL.
+  const pageUrl = `/${page.slug}`;
+  const deadItems = await prisma.navigationItem.findMany({
+    where: { OR: [{ url: pageUrl }, { url: `${pageUrl}/` }] },
+    select: { id: true },
+  });
+  if (deadItems.length) {
+    const ids = deadItems.map((i) => i.id);
+    await prisma.navigationItem.updateMany({ where: { parentId: { in: ids } }, data: { parentId: null } });
+    await prisma.navigationItem.deleteMany({ where: { id: { in: ids } } });
+  }
   await logAudit({
     userId: user.id,
     action: 'page.delete',

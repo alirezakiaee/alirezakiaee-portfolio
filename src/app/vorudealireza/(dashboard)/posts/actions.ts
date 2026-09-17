@@ -230,7 +230,12 @@ export async function deletePost(_prev: PostFormState, formData: FormData): Prom
   const post = await prisma.post.findFirst({ where: { id, deletedAt: null } });
   if (!post) return { error: 'Post not found.' };
 
-  await prisma.post.update({ where: { id }, data: { deletedAt: new Date() } });
+  // Tombstone the slug so it can be reused — the unique constraint would
+  // otherwise keep the slug locked by a post no one can see.
+  await prisma.post.update({
+    where: { id },
+    data: { deletedAt: new Date(), slug: `${post.slug}--deleted-${Date.now().toString(36)}` },
+  });
   await logAudit({
     userId: user.id,
     action: 'post.delete',
