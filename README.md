@@ -29,9 +29,10 @@ npm run dev                  # http://localhost:3000 (or -p 3010)
 | `ADMIN_SETUP_KEY` | One-time key required to create the first admin at `/vorudealireza/setup` |
 | `APP_URL` | Public base URL (sitemap, canonical URLs) |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob token (optional; local dev falls back to `public/uploads`) |
-| `AI_API_KEY` | OpenAI-compatible API key for scheduled post generation (optional; can be set in admin Settings) |
-| `AI_BASE_URL` | Chat-completions endpoint, default `https://api.openai.com/v1` |
-| `AI_MODEL` | Default model, default `gpt-4o-mini` |
+| `AI_PROVIDER` | `openai` (any OpenAI-compatible API) or `gemini` (native Google API) |
+| `AI_API_KEY` | API key for scheduled post generation (optional; can be set in admin Settings) |
+| `AI_BASE_URL` | Endpoint override; defaults per provider (`api.openai.com/v1` or `generativelanguage.googleapis.com/v1beta`) |
+| `AI_MODEL` | Default model, e.g. `gpt-4o-mini` or `gemini-2.0-flash` |
 | `CRON_SECRET` | Bearer secret protecting `/api/cron/ai-generate`; Vercel Cron sends it automatically |
 
 Generate secrets: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`
@@ -46,8 +47,9 @@ Admin lives at **`/vorudealireza`**.
 
 ### AI Content (scheduled post generation)
 
-The **AI Content** module runs recurring schedules that generate blog posts with an
-OpenAI-compatible model (OpenAI, OpenRouter, Groq, Azure OpenAI, local servers — anything
+The **AI Content** module runs recurring schedules that generate blog posts with an AI
+model. Two provider modes: **Google Gemini** (native `generateContent` API) and
+**OpenAI-compatible** (OpenAI, OpenRouter, Groq, Azure OpenAI, local servers — anything
 exposing `/chat/completions`).
 
 - **Schedules** define a generation brief, an optional rotating topic list, frequency

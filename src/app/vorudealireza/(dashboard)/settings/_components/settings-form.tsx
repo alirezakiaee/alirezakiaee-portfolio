@@ -93,10 +93,18 @@ export function SettingsForm({ values }: { values: Record<string, string> }) {
 
       <Section title="AI content generation">
         <p className="text-xs text-muted">
-          Powers scheduled blog-post generation (AI Content in the sidebar). Any OpenAI-compatible
-          API works — OpenAI, OpenRouter, Groq, Azure OpenAI, or a local server.
+          Powers scheduled blog-post generation (AI Content in the sidebar). Supports Google
+          Gemini natively and any OpenAI-compatible API — OpenAI, OpenRouter, Groq, Azure
+          OpenAI, or a local server.
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="ai.provider">Provider</Label>
+            <select id="ai.provider" name="ai.provider" className="field" defaultValue={v('ai.provider') || 'openai'}>
+              <option value="openai">OpenAI-compatible</option>
+              <option value="gemini">Google Gemini</option>
+            </select>
+          </div>
           <div>
             <Label htmlFor="ai.apiKey">API key</Label>
             <input
@@ -111,11 +119,11 @@ export function SettingsForm({ values }: { values: Record<string, string> }) {
           </div>
           <div>
             <Label htmlFor="ai.model">Default model</Label>
-            <input id="ai.model" name="ai.model" className="field" defaultValue={v('ai.model')} placeholder="gpt-4o-mini" maxLength={120} />
+            <input id="ai.model" name="ai.model" className="field" defaultValue={v('ai.model')} placeholder="gpt-4o-mini or gemini-2.0-flash" maxLength={120} />
           </div>
           <div className="sm:col-span-2">
             <Label htmlFor="ai.baseUrl">Base URL</Label>
-            <input id="ai.baseUrl" name="ai.baseUrl" className="field" defaultValue={v('ai.baseUrl')} placeholder="https://api.openai.com/v1" maxLength={300} />
+            <input id="ai.baseUrl" name="ai.baseUrl" className="field" defaultValue={v('ai.baseUrl')} placeholder="auto: api.openai.com/v1 or generativelanguage.googleapis.com/v1beta" maxLength={300} />
           </div>
           <div className="sm:col-span-2">
             <Label htmlFor="ai.systemPrompt">System prompt</Label>

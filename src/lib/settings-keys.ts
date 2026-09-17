@@ -11,6 +11,7 @@ export const SETTING_KEYS = [
   'seo.titleTemplate',
   'seo.defaultDescription',
   'seo.defaultOgImage',
+  'ai.provider',
   'ai.apiKey',
   'ai.baseUrl',
   'ai.model',

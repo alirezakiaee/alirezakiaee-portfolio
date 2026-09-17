@@ -1,7 +1,10 @@
 import 'server-only';
 import { prisma } from '@/lib/db';
 
+export type AiProvider = 'openai' | 'gemini';
+
 export type AiConfig = {
+  provider: AiProvider;
   apiKey: string;
   baseUrl: string; // OpenAI-compatible endpoint, e.g. https://api.openai.com/v1
   model: string;
@@ -19,7 +22,7 @@ export const DEFAULT_SYSTEM_PROMPT = [
   'No inline styles, no script/style/iframe tags, no images.',
 ].join(' ');
 
-const AI_SETTING_KEYS = ['ai.apiKey', 'ai.baseUrl', 'ai.model', 'ai.systemPrompt'] as const;
+const AI_SETTING_KEYS = ['ai.provider', 'ai.apiKey', 'ai.baseUrl', 'ai.model', 'ai.systemPrompt'] as const;
 export type AiSettingKey = (typeof AI_SETTING_KEYS)[number];
 
 // Resolution order: admin Settings row → environment variable → default.
@@ -31,9 +34,24 @@ export async function getAiConfig(): Promise<AiConfig> {
   };
 
   const apiKey = get('ai.apiKey') || process.env.AI_API_KEY || '';
-  const baseUrl = (get('ai.baseUrl') || process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, '');
-  const model = get('ai.model') || process.env.AI_MODEL || 'gpt-4o-mini';
-  const systemPrompt = get('ai.systemPrompt') || DEFAULT_SYSTEM_PROMPT;
+  const baseUrl = (get('ai.baseUrl') || process.env.AI_BASE_URL || '').replace(/\/+$/, '');
 
-  return { apiKey, baseUrl, model, systemPrompt, configured: !!apiKey };
+  // Provider: explicit setting/env wins; otherwise infer from the base URL.
+  const explicit = (get('ai.provider') || process.env.AI_PROVIDER || '').toLowerCase();
+  const provider: AiProvider =
+    explicit === 'gemini' || (!explicit && baseUrl.includes('googleapis.com')) ? 'gemini' : 'openai';
+
+  const defaultBase = provider === 'gemini'
+    ? 'https://generativelanguage.googleapis.com/v1beta'
+    : 'https://api.openai.com/v1';
+  const defaultModel = provider === 'gemini' ? 'gemini-2.0-flash' : 'gpt-4o-mini';
+
+  return {
+    provider,
+    apiKey,
+    baseUrl: baseUrl || defaultBase,
+    model: get('ai.model') || process.env.AI_MODEL || defaultModel,
+    systemPrompt: get('ai.systemPrompt') || DEFAULT_SYSTEM_PROMPT,
+    configured: !!apiKey,
+  };
 }

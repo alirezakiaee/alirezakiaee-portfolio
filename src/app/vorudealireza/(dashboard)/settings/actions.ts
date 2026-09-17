@@ -24,6 +24,7 @@ const FIELD_DEFS: Record<SettingKey, z.ZodString> = {
   'seo.titleTemplate': z.string().trim().max(200),
   'seo.defaultDescription': z.string().trim().max(300),
   'seo.defaultOgImage': z.string().trim().max(500),
+  'ai.provider': z.string().trim().max(20),
   'ai.apiKey': z.string().trim().max(500),
   'ai.baseUrl': z.string().trim().max(300),
   'ai.model': z.string().trim().max(120),

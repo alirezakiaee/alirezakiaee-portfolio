@@ -49,23 +49,42 @@ export async function generatePost(opts: {
     RESPONSE_INSTRUCTIONS,
   ].join('\n');
 
-  const res = await fetch(`${opts.config.baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${opts.config.apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: 'system', content: opts.config.systemPrompt },
-        { role: 'user', content: userMessage },
-      ],
-      temperature: 0.8,
-      response_format: { type: 'json_object' },
-    }),
-    signal: AbortSignal.timeout(120_000),
-  });
+  let res: Response;
+  if (opts.config.provider === 'gemini') {
+    // Gemini native generateContent API.
+    res = await fetch(
+      `${opts.config.baseUrl}/models/${model}:generateContent?key=${encodeURIComponent(opts.config.apiKey)}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: opts.config.systemPrompt }] },
+          contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+          generationConfig: { temperature: 0.8, responseMimeType: 'application/json' },
+        }),
+        signal: AbortSignal.timeout(120_000),
+      }
+    );
+  } else {
+    // OpenAI-compatible chat/completions API (OpenAI, OpenRouter, Groq, Azure, local).
+    res = await fetch(`${opts.config.baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${opts.config.apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: opts.config.systemPrompt },
+          { role: 'user', content: userMessage },
+        ],
+        temperature: 0.8,
+        response_format: { type: 'json_object' },
+      }),
+      signal: AbortSignal.timeout(120_000),
+    });
+  }
 
   if (!res.ok) {
     const body = await res.text().catch(() => '');
@@ -73,12 +92,16 @@ export async function generatePost(opts: {
   }
 
   const json = await res.json();
-  const text: string | undefined = json?.choices?.[0]?.message?.content;
+  const text: string | undefined =
+    opts.config.provider === 'gemini'
+      ? json?.candidates?.[0]?.content?.parts?.[0]?.text
+      : json?.choices?.[0]?.message?.content;
   if (!text) throw new Error('AI API returned no content.');
 
   let parsed: unknown;
   try {
-    parsed = JSON.parse(text);
+    // Strip markdown code fences — some models add them despite JSON mode.
+    parsed = JSON.parse(text.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, ''));
   } catch {
     throw new Error('AI response was not valid JSON.');
   }
@@ -96,7 +119,13 @@ export async function generatePost(opts: {
       suggestedTags: d.suggestedTags,
     },
     model,
-    promptTokens: json?.usage?.prompt_tokens ?? null,
-    completionTokens: json?.usage?.completion_tokens ?? null,
+    promptTokens:
+      opts.config.provider === 'gemini'
+        ? json?.usageMetadata?.promptTokenCount ?? null
+        : json?.usage?.prompt_tokens ?? null,
+    completionTokens:
+      opts.config.provider === 'gemini'
+        ? json?.usageMetadata?.candidatesTokenCount ?? null
+        : json?.usage?.completion_tokens ?? null,
   };
 }
