@@ -1,11 +1,39 @@
 'use client';
 
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 
 // Mounts the site's progressive-enhancement layer: scroll progress bar,
 // IntersectionObserver reveals, mobile menu toggle, and the custom cursor.
 // Everything degrades gracefully — content is fully server-rendered without JS.
 export function PublicEffects() {
+  const pathname = usePathname();
+
+  // Re-observe .reveal elements on every route change — App Router client
+  // navigation swaps page content without remounting this component, so
+  // elements rendered after the initial mount would otherwise stay hidden.
+  useEffect(() => {
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) {
+            e.target.classList.add('is-visible');
+            io.unobserve(e.target);
+          }
+        }
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
+    );
+    // Wait a frame so the new route's DOM is painted before querying.
+    const raf = requestAnimationFrame(() => {
+      document.querySelectorAll('.reveal:not(.is-visible)').forEach((el) => io.observe(el));
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      io.disconnect();
+    };
+  }, [pathname]);
+
   useEffect(() => {
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -19,20 +47,6 @@ export function PublicEffects() {
     };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
-
-    // Reveal on scroll
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const e of entries) {
-          if (e.isIntersecting) {
-            e.target.classList.add('is-visible');
-            io.unobserve(e.target);
-          }
-        }
-      },
-      { threshold: 0.12, rootMargin: '0px 0px -8% 0px' }
-    );
-    document.querySelectorAll('.reveal').forEach((el) => io.observe(el));
 
     // Mobile menu
     const btn = document.getElementById('menu-btn');
@@ -78,7 +92,6 @@ export function PublicEffects() {
 
     return () => {
       window.removeEventListener('scroll', onScroll);
-      io.disconnect();
       btn?.removeEventListener('click', toggle);
       menu?.querySelectorAll('a').forEach((a) => a.removeEventListener('click', close));
       removeCursor();
