@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
-import DOMPurify from 'isomorphic-dompurify';
+import sanitizeHtml from 'sanitize-html';
 import { Prisma, type ContentStatus } from '@prisma/client';
 import { prisma } from '@/lib/db';
 import { getSessionUser } from '@/lib/auth/session';
@@ -115,8 +115,18 @@ export async function savePost(_prev: PostFormState, formData: FormData): Promis
   if (!isValidSlug(slug)) return { error: 'Slug must be lowercase letters, numbers and dashes.' };
 
   // Sanitize the rich-text HTML server-side — never trust client content.
-  const content = DOMPurify.sanitize(d.content ?? '', {
-    FORBID_TAGS: ['style', 'form', 'input', 'button', 'iframe', 'object', 'embed'],
+  const content = sanitizeHtml(d.content ?? '', {
+    allowedTags: sanitizeHtml.defaults.allowedTags.concat([
+      'h1', 'h2', 'img', 'figure', 'figcaption', 'u', 's', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'span',
+    ]),
+    allowedAttributes: {
+      ...sanitizeHtml.defaults.allowedAttributes,
+      '*': ['href', 'src', 'alt', 'title', 'class', 'target', 'rel', 'width', 'height'],
+    },
+    allowedSchemes: ['http', 'https', 'mailto', 'tel'],
+    disallowedTagsMode: 'discard',
+    exclusiveFilter: (frame) =>
+      ['form', 'input', 'button', 'iframe', 'object', 'embed'].includes(frame.tag),
   });
 
   const robotsIndex = formData.get('robotsIndex') === 'on';

@@ -71,5 +71,5 @@ npm run build       # production build
 - Session cookie `ak_admin`: httpOnly, Secure, SameSite=Strict, signed JWT (7-day expiry).
 - Login is rate-limited per identifier and locks after 5 failed attempts / 15 min (`auth_attempts`).
 - Setup endpoint requires `ADMIN_SETUP_KEY` — remove/rotate it after enrolling.
-- Post content and richText page blocks are sanitized with DOMPurify before storage.
+- Post content and richText page blocks are sanitized with `sanitize-html` before storage.
 - Public-path DB redirects are enforced in edge middleware (60s cache, fail-open).
