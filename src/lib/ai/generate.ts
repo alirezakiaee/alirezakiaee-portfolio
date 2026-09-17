@@ -49,25 +49,37 @@ export async function generatePost(opts: {
     RESPONSE_INSTRUCTIONS,
   ].join('\n');
 
-  let res: Response;
-  if (opts.config.provider === 'gemini') {
-    // Gemini native generateContent API.
-    res = await fetch(
-      `${opts.config.baseUrl}/models/${model}:generateContent?key=${encodeURIComponent(opts.config.apiKey)}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: opts.config.systemPrompt }] },
-          contents: [{ role: 'user', parts: [{ text: userMessage }] }],
-          generationConfig: { temperature: 0.8, responseMimeType: 'application/json' },
-        }),
-        signal: AbortSignal.timeout(120_000),
-      }
-    );
-  } else {
+  // Retry transient failures (503 UNAVAILABLE, 429 rate-limit, 500) with
+  // exponential backoff — Gemini free tier 503s under load frequently.
+  const callApi = async (): Promise<Response> => {
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const res = await doFetch();
+      if (res.ok || (res.status !== 503 && res.status !== 429 && res.status !== 500)) return res;
+      if (attempt < 3) await new Promise((r) => setTimeout(r, 2000 * 2 ** attempt));
+      else return res;
+    }
+    throw new Error('unreachable');
+  };
+
+  const doFetch = (): Promise<Response> => {
+    if (opts.config.provider === 'gemini') {
+      // Gemini native generateContent API.
+      return fetch(
+        `${opts.config.baseUrl}/models/${model}:generateContent?key=${encodeURIComponent(opts.config.apiKey)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: opts.config.systemPrompt }] },
+            contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+            generationConfig: { temperature: 0.8, responseMimeType: 'application/json' },
+          }),
+          signal: AbortSignal.timeout(120_000),
+        }
+      );
+    }
     // OpenAI-compatible chat/completions API (OpenAI, OpenRouter, Groq, Azure, local).
-    res = await fetch(`${opts.config.baseUrl}/chat/completions`, {
+    return fetch(`${opts.config.baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -84,7 +96,9 @@ export async function generatePost(opts: {
       }),
       signal: AbortSignal.timeout(120_000),
     });
-  }
+  };
+
+  const res = await callApi();
 
   if (!res.ok) {
     const body = await res.text().catch(() => '');
