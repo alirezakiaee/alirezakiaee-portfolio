@@ -70,7 +70,7 @@ export default async function AiContentPage() {
       </div>
 
       <p className="mt-6 text-xs text-muted">
-        Runs are triggered hourly by the <code>/api/cron/ai-generate</code> endpoint (Vercel Cron).
+        Runs are triggered once per day (Hobby plan limit) by the <code>/api/cron/ai-generate</code> endpoint (Vercel Cron).
         See <Link href="/vorudealireza/ai-content/logs" className="underline">generation logs</Link> for history.
       </p>
     </div>

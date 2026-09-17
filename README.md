@@ -55,9 +55,11 @@ exposing `/chat/completions`).
   auto-publish), category, and tags. Each schedule can override the global model.
 - **Configuration** lives in Settings → AI content generation (API key, base URL, default
   model, system prompt) with env-var fallbacks. The key field is write-only.
-- **Execution**: `vercel.json` registers an hourly cron hitting
-  `/api/cron/ai-generate`, which runs every due schedule. Hobby plan runs it once a day —
-  enough for daily/weekly/monthly schedules. A **Run now** button on each schedule
+- **Execution**: `vercel.json` registers a daily cron (06:00 UTC) hitting
+  `/api/cron/ai-generate`, which runs every due schedule — Hobby plan only allows
+  daily crons, and that's enough for daily/weekly/monthly schedules. For more frequent
+  runs on Hobby, point a free external scheduler (e.g. cron-job.org) at the endpoint with
+  `Authorization: Bearer <CRON_SECRET>`. A **Run now** button on each schedule
   generates immediately (useful for testing).
 - **Every run** writes an `ai_generation_logs` row (status, post link, model, tokens,
   duration, error) visible under AI Content → generation logs. Missing API key logs a
