@@ -29,6 +29,10 @@ npm run dev                  # http://localhost:3000 (or -p 3010)
 | `ADMIN_SETUP_KEY` | One-time key required to create the first admin at `/vorudealireza/setup` |
 | `APP_URL` | Public base URL (sitemap, canonical URLs) |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob token (optional; local dev falls back to `public/uploads`) |
+| `AI_API_KEY` | OpenAI-compatible API key for scheduled post generation (optional; can be set in admin Settings) |
+| `AI_BASE_URL` | Chat-completions endpoint, default `https://api.openai.com/v1` |
+| `AI_MODEL` | Default model, default `gpt-4o-mini` |
+| `CRON_SECRET` | Bearer secret protecting `/api/cron/ai-generate`; Vercel Cron sends it automatically |
 
 Generate secrets: `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`
 
@@ -38,7 +42,28 @@ Admin lives at **`/vorudealireza`**.
 
 1. Visit `/vorudealireza/setup` once with `ADMIN_SETUP_KEY` to create the first admin and enroll an Authenticator app (TOTP).
 2. Log in at `/vorudealireza/login` — password first, then the 6-digit Authenticator code.
-3. Modules: Pages (block editor), Blog Posts (categories/tags, sanitized HTML), Projects (case studies), Services, Testimonials, Technologies, Media Library, Navigation (header/footer menus), Settings, Redirects, Users, Audit Log.
+3. Modules: Pages (block editor), Blog Posts (categories/tags, sanitized HTML), Projects (case studies), Services, Testimonials, Technologies, Media Library, Navigation (header/footer menus), Settings, Redirects, Users, Audit Log, AI Content.
+
+### AI Content (scheduled post generation)
+
+The **AI Content** module runs recurring schedules that generate blog posts with an
+OpenAI-compatible model (OpenAI, OpenRouter, Groq, Azure OpenAI, local servers — anything
+exposing `/chat/completions`).
+
+- **Schedules** define a generation brief, an optional rotating topic list, frequency
+  (daily / weekly on a weekday / monthly on a day), target status (draft for review or
+  auto-publish), category, and tags. Each schedule can override the global model.
+- **Configuration** lives in Settings → AI content generation (API key, base URL, default
+  model, system prompt) with env-var fallbacks. The key field is write-only.
+- **Execution**: `vercel.json` registers an hourly cron hitting
+  `/api/cron/ai-generate`, which runs every due schedule. Hobby plan runs it once a day —
+  enough for daily/weekly/monthly schedules. A **Run now** button on each schedule
+  generates immediately (useful for testing).
+- **Every run** writes an `ai_generation_logs` row (status, post link, model, tokens,
+  duration, error) visible under AI Content → generation logs. Missing API key logs a
+  SKIPPED run rather than failing silently.
+- Generated HTML is sanitized to a strict allowlist before storage; the post appears in
+  the normal Posts module for review/editing like any other post.
 
 Roles: `ADMIN`, `EDITOR`, `AUTHOR`, `VIEWER` — enforced server-side on every mutating Server Action; every mutation writes an `audit_logs` row.
 

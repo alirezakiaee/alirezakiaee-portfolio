@@ -91,6 +91,39 @@ export function SettingsForm({ values }: { values: Record<string, string> }) {
         </div>
       </Section>
 
+      <Section title="AI content generation">
+        <p className="text-xs text-muted">
+          Powers scheduled blog-post generation (AI Content in the sidebar). Any OpenAI-compatible
+          API works — OpenAI, OpenRouter, Groq, Azure OpenAI, or a local server.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <Label htmlFor="ai.apiKey">API key</Label>
+            <input
+              id="ai.apiKey"
+              name="ai.apiKey"
+              type="password"
+              autoComplete="new-password"
+              className="field"
+              placeholder={v('ai.apiKey') ? '•••••••• (set — leave blank to keep)' : 'sk-…'}
+              maxLength={500}
+            />
+          </div>
+          <div>
+            <Label htmlFor="ai.model">Default model</Label>
+            <input id="ai.model" name="ai.model" className="field" defaultValue={v('ai.model')} placeholder="gpt-4o-mini" maxLength={120} />
+          </div>
+          <div className="sm:col-span-2">
+            <Label htmlFor="ai.baseUrl">Base URL</Label>
+            <input id="ai.baseUrl" name="ai.baseUrl" className="field" defaultValue={v('ai.baseUrl')} placeholder="https://api.openai.com/v1" maxLength={300} />
+          </div>
+          <div className="sm:col-span-2">
+            <Label htmlFor="ai.systemPrompt">System prompt</Label>
+            <textarea id="ai.systemPrompt" name="ai.systemPrompt" rows={5} className="field" defaultValue={v('ai.systemPrompt')} placeholder="Leave blank for the built-in default persona." />
+          </div>
+        </div>
+      </Section>
+
       <div className="flex items-center gap-3">
         <button type="submit" className="btn" disabled={pending}>Save settings</button>
         {state.saved && !state.error && <p className="text-sm text-green-700">Saved.</p>}

@@ -11,6 +11,10 @@ export const SETTING_KEYS = [
   'seo.titleTemplate',
   'seo.defaultDescription',
   'seo.defaultOgImage',
+  'ai.apiKey',
+  'ai.baseUrl',
+  'ai.model',
+  'ai.systemPrompt',
 ] as const;
 
 export type SettingKey = (typeof SETTING_KEYS)[number];

@@ -178,7 +178,8 @@ model Category {
   name String @unique
   slug String @unique
 
-  posts PostCategory[]
+  posts       PostCategory[]
+  aiSchedules AiSchedule[]
 
   @@map("categories")
 }
@@ -303,6 +304,7 @@ model Post {
   categories PostCategory[]
   tags       PostTag[]
   revisions  PostRevision[]
+  aiRuns     AiGenerationLog[]
 
   @@index([status, publishedAt])
   @@index([slug])
@@ -582,4 +584,77 @@ model ContactSubmission {
 
   @@index([status, createdAt])
   @@map("contact_submissions")
+}
+
+// ============================================================
+// AI Content Generation — scheduled blog post pipelines
+// ============================================================
+
+enum AiFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum AiPublishMode {
+  DRAFT    // generate as draft for human review
+  PUBLISH  // publish immediately
+}
+
+enum AiRunStatus {
+  SUCCESS
+  FAILED
+  SKIPPED
+}
+
+model AiSchedule {
+  id          String         @id @default(uuid())
+  name        String         // human label, e.g. "Weekly .NET tips"
+  prompt      String         // instructions to the model (topic, tone, audience)
+  topics      String[]       // optional rotation list — one is picked per run
+  topicIndex  Int            @default(0) @map("topic_index")
+
+  frequency   AiFrequency    @default(WEEKLY)
+  runHour     Int            @default(9) @map("run_hour")    // UTC hour 0-23
+  runWeekday  Int            @default(1) @map("run_weekday") // 0=Sun..6=Sat (WEEKLY only)
+  runMonthDay Int            @default(1) @map("run_month_day") // 1-28 (MONTHLY only)
+
+  model       String?        // overrides AI_MODEL env / ai.model setting
+  publishMode AiPublishMode  @default(DRAFT) @map("publish_mode")
+  categoryId  String?        @map("category_id")
+  category    Category?      @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tagsCsv     String         @default("") @map("tags_csv") // comma-separated tag names to attach
+
+  enabled     Boolean        @default(true)
+  nextRunAt   DateTime       @map("next_run_at")
+  lastRunAt   DateTime?      @map("last_run_at")
+
+  createdAt   DateTime       @default(now()) @map("created_at")
+  updatedAt   DateTime       @updatedAt @map("updated_at")
+
+  runs        AiGenerationLog[]
+
+  @@index([enabled, nextRunAt])
+  @@map("ai_schedules")
+}
+
+model AiGenerationLog {
+  id          String       @id @default(uuid())
+  scheduleId  String?      @map("schedule_id")
+  schedule    AiSchedule?  @relation(fields: [scheduleId], references: [id], onDelete: SetNull)
+  status      AiRunStatus
+  postId      String?      @map("post_id")
+  post        Post?        @relation(fields: [postId], references: [id], onDelete: SetNull)
+  model       String?
+  topic       String?
+  promptTokens     Int?    @map("prompt_tokens")
+  completionTokens Int?    @map("completion_tokens")
+  error       String?
+  durationMs  Int?         @map("duration_ms")
+  trigger     String       @default("cron") // "cron" | "manual"
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([scheduleId, createdAt])
+  @@map("ai_generation_logs")
 }

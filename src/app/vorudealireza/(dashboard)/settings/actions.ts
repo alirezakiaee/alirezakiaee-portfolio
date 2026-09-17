@@ -24,6 +24,10 @@ const FIELD_DEFS: Record<SettingKey, z.ZodString> = {
   'seo.titleTemplate': z.string().trim().max(200),
   'seo.defaultDescription': z.string().trim().max(300),
   'seo.defaultOgImage': z.string().trim().max(500),
+  'ai.apiKey': z.string().trim().max(500),
+  'ai.baseUrl': z.string().trim().max(300),
+  'ai.model': z.string().trim().max(120),
+  'ai.systemPrompt': z.string().trim().max(8000),
 };
 
 export async function saveSettings(_prev: SettingsFormState, formData: FormData): Promise<SettingsFormState> {
@@ -40,6 +44,8 @@ export async function saveSettings(_prev: SettingsFormState, formData: FormData)
     const raw = formData.get(key);
     const parsed = FIELD_DEFS[key].safeParse(raw ?? '');
     if (!parsed.success) return { error: `${key}: ${parsed.error.issues[0]?.message}` };
+    // The API key field is write-only: a blank submission keeps the stored value.
+    if (key === 'ai.apiKey' && parsed.data === '') continue;
     values.push([key, parsed.data]);
   }
 

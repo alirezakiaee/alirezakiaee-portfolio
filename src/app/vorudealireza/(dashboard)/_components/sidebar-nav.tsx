@@ -14,6 +14,7 @@ const GROUPS: NavGroup[] = [
     items: [
       { label: 'Pages', href: '/vorudealireza/pages' },
       { label: 'Blog Posts', href: '/vorudealireza/posts' },
+      { label: 'AI Content', href: '/vorudealireza/ai-content' },
       { label: 'Projects', href: '/vorudealireza/projects' },
       { label: 'Services', href: '/vorudealireza/services' },
       { label: 'Testimonials', href: '/vorudealireza/testimonials' },
