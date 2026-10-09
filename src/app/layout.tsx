@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   title: 'Alireza Kiaee — Senior Software Engineer',
   description:
     'Portfolio of Alireza Kiaee — senior software engineer building full-stack applications, ERP integrations, and data workflows in Toronto.',
+  verification: {
+    google: 'YJTXrVJT-nfv1kwFBRwnXj-SFepVO2Cad46NYydfG58',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
