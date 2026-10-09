@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useRef } from 'react';
 import { saveProject, type ProjectFormState } from '../actions';
 
 export type ProjectFormInitial = {
@@ -75,11 +75,16 @@ function TextArea({ id, name, rows = 4, defaultValue, placeholder, mono }: {
 
 export function ProjectForm({ project }: { project: ProjectFormInitial }) {
   const [state, formAction, pending] = useActionState(saveProject, initial);
+  const intentRef = useRef<HTMLInputElement>(null);
+  const setIntent = (v: string) => () => {
+    if (intentRef.current) intentRef.current.value = v;
+  };
   const status = project.status ?? 'DRAFT';
 
   return (
     <form action={formAction} className="space-y-6">
       {project.id && <input type="hidden" name="id" value={project.id} />}
+      <input type="hidden" name="intent" defaultValue="save" ref={intentRef} />
 
       <Section title="Basics">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -230,21 +235,21 @@ export function ProjectForm({ project }: { project: ProjectFormInitial }) {
         <span className="text-sm text-muted mr-auto">
           Status: <span className="font-medium text-ink">{status}</span>
         </span>
-        <button type="submit" name="intent" value="save" className="btn-ghost" disabled={pending}>
+        <button type="submit" onClick={setIntent('save')} className="btn-ghost" disabled={pending}>
           Save
         </button>
         {status !== 'PUBLISHED' && (
-          <button type="submit" name="intent" value="publish" className="btn" disabled={pending}>
+          <button type="submit" onClick={setIntent('publish')} className="btn" disabled={pending}>
             Publish
           </button>
         )}
         {status === 'PUBLISHED' && (
-          <button type="submit" name="intent" value="unpublish" className="btn-ghost" disabled={pending}>
+          <button type="submit" onClick={setIntent('unpublish')} className="btn-ghost" disabled={pending}>
             Unpublish
           </button>
         )}
         {status !== 'ARCHIVED' && (
-          <button type="submit" name="intent" value="archive" className="btn-ghost" disabled={pending}>
+          <button type="submit" onClick={setIntent('archive')} className="btn-ghost" disabled={pending}>
             Archive
           </button>
         )}
@@ -261,7 +266,7 @@ export function ProjectForm({ project }: { project: ProjectFormInitial }) {
             defaultValue={project.scheduledAt ?? ''}
           />
         </div>
-        <button type="submit" name="intent" value="schedule" className="btn-ghost" disabled={pending}>
+        <button type="submit" onClick={setIntent('schedule')} className="btn-ghost" disabled={pending}>
           Schedule
         </button>
       </div>

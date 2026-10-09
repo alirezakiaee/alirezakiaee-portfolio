@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useRef } from 'react';
 import { savePost, type PostFormState } from '../actions';
 
 export type PostFormInitial = {
@@ -50,11 +50,16 @@ export function PostForm({
   images: { id: string; originalName: string; title: string | null }[];
 }) {
   const [state, formAction, pending] = useActionState(savePost, initial);
+  const intentRef = useRef<HTMLInputElement>(null);
+  const setIntent = (v: string) => () => {
+    if (intentRef.current) intentRef.current.value = v;
+  };
   const status = post.status ?? 'DRAFT';
 
   return (
     <form action={formAction} className="space-y-6">
       {post.id && <input type="hidden" name="id" value={post.id} />}
+      <input type="hidden" name="intent" defaultValue="save" ref={intentRef} />
 
       <Section title="Post">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -140,21 +145,21 @@ export function PostForm({
         <span className="text-sm text-muted mr-auto">
           Status: <span className="font-medium text-ink">{status}</span>
         </span>
-        <button type="submit" name="intent" value="save" className="btn-ghost" disabled={pending}>
+        <button type="submit" onClick={setIntent('save')} className="btn-ghost" disabled={pending}>
           Save
         </button>
         {status !== 'PUBLISHED' && (
-          <button type="submit" name="intent" value="publish" className="btn" disabled={pending}>
+          <button type="submit" onClick={setIntent('publish')} className="btn" disabled={pending}>
             Publish
           </button>
         )}
         {status === 'PUBLISHED' && (
-          <button type="submit" name="intent" value="unpublish" className="btn-ghost" disabled={pending}>
+          <button type="submit" onClick={setIntent('unpublish')} className="btn-ghost" disabled={pending}>
             Unpublish
           </button>
         )}
         {status !== 'ARCHIVED' && (
-          <button type="submit" name="intent" value="archive" className="btn-ghost" disabled={pending}>
+          <button type="submit" onClick={setIntent('archive')} className="btn-ghost" disabled={pending}>
             Archive
           </button>
         )}
@@ -165,7 +170,7 @@ export function PostForm({
           <Label htmlFor="scheduledAt">Schedule publish at</Label>
           <input id="scheduledAt" name="scheduledAt" type="datetime-local" className="field" defaultValue={post.scheduledAt ?? ''} />
         </div>
-        <button type="submit" name="intent" value="schedule" className="btn-ghost" disabled={pending}>
+        <button type="submit" onClick={setIntent('schedule')} className="btn-ghost" disabled={pending}>
           Schedule
         </button>
       </div>
